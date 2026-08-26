@@ -496,11 +496,11 @@ Promise.all([cargarCSV(CSV_MOVIMIENTOS), cargarCSV(CSV_TOPES)]).then(([movs, top
   topesRaw.forEach(r => {
     const cat = (r['Categoría']||'').trim();
     if(!cat) return;
-    TOPES[cat] = Number(r['Tope_Mensual']) || 0;
+    TOPES[cat] = Number(String(r['Tope_Mensual']||'').replace(/[^\d.-]/g,'')) || 0;
     TIPOS_TOPE[cat] = (r['Tipo_Tope']||'').trim();
     ICONOS_CAT[cat] = (r['Ícono']||'📌').trim();
   });
-  movs.forEach(m => { m._fecha = parseFecha(m['Fecha']); m._monto = Number(m['Monto']) || 0; });
+  movs.forEach(m => { m._fecha = parseFecha(m['Fecha']); m._monto = Number(String(m['Monto']||'').replace(/[^\d.-]/g,'')) || 0; });
   MOVS = movs;
 
   poblarSelectorMes();
