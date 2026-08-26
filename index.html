@@ -403,6 +403,7 @@
 <script>
 const CSV_MOVIMIENTOS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRLfN2qjT0gT6YQloWSrSyJ4eJgZtF1LnCXEjDMZlOlwz_72G0L8lTHNOZmnepcCq3k2dvX7WJ5upLx/pub?gid=0&single=true&output=csv';
 const CSV_TOPES = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRLfN2qjT0gT6YQloWSrSyJ4eJgZtF1LnCXEjDMZlOlwz_72G0L8lTHNOZmnepcCq3k2dvX7WJ5upLx/pub?gid=1363525202&single=true&output=csv';
+const CSV_CONCILIACION = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRLfN2qjT0gT6YQloWSrSyJ4eJgZtF1LnCXEjDMZlOlwz_72G0L8lTHNOZmnepcCq3k2dvX7WJ5upLx/pub?gid=1313860211&single=true&output=csv';
 const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbxvN2rvCP5jt7xWkcpEsHjokcMoUGFuWsNncUs26oqdAmfrTR_t-MtkYn8TsUz-9pVyjw/exec';
 const DASHBOARD_SECRET = 'scc-gastos-2026-x7f2';
 const META_INGRESO_MENSUAL = 2600000;
@@ -492,7 +493,11 @@ function sparklineSVG(values, color){
 let chartTendencia, chartDona;
 let TOPES = {}, TIPOS_TOPE = {}, ICONOS_CAT = {}, MOVS = [];
 
-Promise.all([cargarCSV(CSV_MOVIMIENTOS), cargarCSV(CSV_TOPES)]).then(([movs, topesRaw]) => {
+Promise.all([
+  cargarCSV(CSV_MOVIMIENTOS),
+  cargarCSV(CSV_TOPES),
+  CSV_CONCILIACION ? cargarCSV(CSV_CONCILIACION) : Promise.resolve([])
+]).then(([movs, topesRaw, conciliacionData]) => {
   topesRaw.forEach(r => {
     const cat = (r['Categoría']||'').trim();
     if(!cat) return;
@@ -515,7 +520,7 @@ Promise.all([cargarCSV(CSV_MOVIMIENTOS), cargarCSV(CSV_TOPES)]).then(([movs, top
   renderMes(hoy.getFullYear(), hoy.getMonth());
   renderTendenciaCategoria();
   renderYTD(hoy.getFullYear(), hoy.getMonth());
-  renderConciliacion();
+  renderConciliacion(conciliacionData);
 
   document.getElementById('btnExportar').addEventListener('click', () => window.print());
   document.getElementById('btnToggleTopes').addEventListener('click', () => {
@@ -950,27 +955,23 @@ function renderYTD(anio, mesHasta){
 }
 
 // ============ CONCILIACIÓN ============
-const CSV_CONCILIACION = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRLfN2qjT0gT6YQloWSrSyJ4eJgZtF1LnCXEjDMZlOlwz_72G0L8lTHNOZmnepcCq3k2dvX7WJ5upLx/pub?gid=1313860211&single=true&output=csv';
-
-function renderConciliacion(){
+function renderConciliacion(datos){
   const cont = document.getElementById('conciliacionCard');
   if(!CSV_CONCILIACION){
     cont.innerHTML = '<div style="color:var(--muted); font-size:12px;">Aún no conectado. Crea la hoja <b>Conciliacion_Historial</b>, publícala como CSV y pega el link en <code>CSV_CONCILIACION</code> del código.</div>';
     return;
   }
-  cargarCSV(CSV_CONCILIACION).then(datos => {
-    if(!datos.length){ cont.innerHTML = '<div style="color:var(--muted); font-size:12px;">Sin registros aún.</div>'; return; }
-    const porBanco = {};
-    datos.forEach(r => { porBanco[r['Banco']] = r; }); // se queda con el último de cada banco (asume orden cronológico)
-    cont.innerHTML = '';
-    Object.values(porBanco).forEach(r => {
-      const pct = Number(r['Pct_Capturado']) || 0;
-      const color = pct >= 90 ? 'var(--green)' : (pct >= 70 ? 'var(--naranjo)' : 'var(--red)');
-      const div = document.createElement('div');
-      div.className = 'conc-banco';
-      div.innerHTML = `<div>${r['Banco']}<div class="conc-fecha">${r['Fecha']}</div></div><div class="conc-pct" style="color:${color}">${pct}%</div>`;
-      cont.appendChild(div);
-    });
+  if(!datos || !datos.length){ cont.innerHTML = '<div style="color:var(--muted); font-size:12px;">Sin registros aún.</div>'; return; }
+  const porBanco = {};
+  datos.forEach(r => { porBanco[r['Banco']] = r; }); // se queda con el último de cada banco (asume orden cronológico)
+  cont.innerHTML = '';
+  Object.values(porBanco).forEach(r => {
+    const pct = Number(r['Pct_Capturado']) || 0;
+    const color = pct >= 90 ? 'var(--green)' : (pct >= 70 ? 'var(--naranjo)' : 'var(--red)');
+    const div = document.createElement('div');
+    div.className = 'conc-banco';
+    div.innerHTML = `<div>${r['Banco']}<div class="conc-fecha">${r['Fecha']}</div></div><div class="conc-pct" style="color:${color}">${pct}%</div>`;
+    cont.appendChild(div);
   });
 }
 
