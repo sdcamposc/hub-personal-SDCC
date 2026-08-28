@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Running — Hub personal</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root{
+    --accent:#3E6FD9;
+    --teal:#14B8A6;
+    --amber:#F59E0B;
+    --purple:#8B5CF6;
+    --red:#EF4444;
+    --green:#22C55E;
+    --gray:#6B7280;
+    --bg:#F7F8FA;
+    --card:#FFFFFF;
+    --text:#1F2933;
+    --text-secondary:#6B7280;
+    --border:#E5E7EB;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    padding-bottom:60px;
+  }
+  header{
+    padding:20px 16px 12px;
+    max-width:900px;
+    margin:0 auto;
+  }
+  header a{
+    color:var(--text-secondary);
+    text-decoration:none;
+    font-size:13px;
+  }
+  header h1{
+    font-size:22px;
+    font-weight:700;
+    margin-top:6px;
+  }
+  nav.tabs{
+    display:flex;
+    gap:6px;
+    max-width:900px;
+    margin:0 auto;
+    padding:0 16px 12px;
+    border-bottom:1px solid var(--border);
+  }
+  nav.tabs button{
+    flex:1;
+    border:none;
+    background:none;
+    padding:10px 8px;
+    font-size:14px;
+    font-weight:600;
+    color:var(--text-secondary);
+    border-bottom:2px solid transparent;
+    cursor:pointer;
+  }
+  nav.tabs button.active{
+    color:var(--accent);
+    border-bottom-color:var(--accent);
+  }
+  main{
+    max-width:900px;
+    margin:0 auto;
+    padding:16px;
+  }
+  .tab-panel{display:none;}
+  .tab-panel.active{display:block;}
+
+  .kpis{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:10px;
+    margin-bottom:18px;
+  }
+  @media(min-width:600px){ .kpis{grid-template-columns:repeat(4,1fr);} }
+  .kpi{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:14px;
+  }
+  .kpi .label{font-size:12px;color:var(--text-secondary);}
+  .kpi .value{font-size:20px;font-weight:700;margin-top:4px;}
+  .kpi .sub{font-size:11px;color:var(--text-secondary);margin-top:2px;}
+
+  .card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:16px;
+    margin-bottom:16px;
+  }
+  .card h2{font-size:15px;font-weight:600;margin-bottom:10px;}
+  .card h2 .unit{font-weight:400;color:var(--text-secondary);font-size:12px;}
+
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--border);white-space:nowrap;}
+  th{color:var(--text-secondary);font-weight:600;font-size:12px;}
+  .table-scroll{overflow-x:auto;}
+
+  select,input,button.primary{
+    font-size:14px;
+    padding:10px 12px;
+    border-radius:8px;
+    border:1px solid var(--border);
+    background:#fff;
+    width:100%;
+  }
+  label{font-size:13px;font-weight:600;color:var(--text-secondary);display:block;margin:12px 0 4px;}
+  button.primary{
+    background:var(--accent);
+    color:#fff;
+    border:none;
+    font-weight:600;
+    margin-top:18px;
+    cursor:pointer;
+  }
+  .badge{
+    display:inline-block;
+    padding:2px 8px;
+    border-radius:999px;
+    font-size:11px;
+    font-weight:600;
+  }
+  .badge.green{background:rgba(34,197,94,0.12);color:#166534;}
+  .badge.amber{background:rgba(245,158,11,0.12);color:#92400E;}
+  .badge.red{background:rgba(239,68,68,0.12);color:#991B1B;}
+  .loading{text-align:center;color:var(--text-secondary);padding:40px 0;}
+  .subtabs{display:flex;gap:8px;margin-bottom:12px;}
+  .subtabs button{
+    border:1px solid var(--border);
+    background:#fff;
+    padding:6px 12px;
+    border-radius:999px;
+    font-size:12px;
+    cursor:pointer;
+  }
+  .subtabs button.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+</style>
+</head>
+<body>
+
+<header>
+  <a href="../">← Hub personal</a>
+  <h1>🏃 Running + piernas</h1>
+</header>
+
+<nav class="tabs">
+  <button class="tab-btn active" data-tab="dashboard">Dashboard</button>
+  <button class="tab-btn" data-tab="historial">Historial</button>
+  <button class="tab-btn" data-tab="registrar">Registrar</button>
+</nav>
+
+<main>
+
+  <div id="loading" class="loading">Cargando datos…</div>
+
+  <!-- ==================== DASHBOARD ==================== -->
+  <section id="tab-dashboard" class="tab-panel">
+    <div class="kpis">
+      <div class="kpi">
+        <div class="label">Días para la carrera</div>
+        <div class="value" id="kpi-countdown">—</div>
+        <div class="sub">18 oct 2026 · meta sub-32:00</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Ritmo reciente</div>
+        <div class="value" id="kpi-ritmo">—</div>
+        <div class="sub">promedio últimas 5 sesiones</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Volumen semana</div>
+        <div class="value" id="kpi-volumen">—</div>
+        <div class="sub" id="kpi-volumen-sub">km esta semana</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Racha piernas</div>
+        <div class="value" id="kpi-racha">—</div>
+        <div class="sub" id="kpi-racha-sub">semanas con 2+ sesiones</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Tendencia de ritmo <span class="unit">min/km</span></h2>
+      <canvas id="chart-ritmo" height="200"></canvas>
+      <p id="proyeccion-texto" style="font-size:13px;color:var(--text-secondary);margin-top:10px;"></p>
+    </div>
+
+    <div class="card">
+      <h2>Cadencia <span class="unit">spm · objetivo ≥158</span></h2>
+      <canvas id="chart-cadencia" height="180"></canvas>
+    </div>
+
+    <div class="card">
+      <h2>Volumen semanal <span class="unit">km</span></h2>
+      <canvas id="chart-volumen" height="180"></canvas>
+    </div>
+
+    <div class="card">
+      <h2>Piernas — consistencia</h2>
+      <canvas id="chart-piernas" height="160"></canvas>
+    </div>
+  </section>
+
+  <!-- ==================== HISTORIAL ==================== -->
+  <section id="tab-historial" class="tab-panel">
+    <div class="subtabs">
+      <button class="sub-btn active" data-sub="running">Running</button>
+      <button class="sub-btn" data-sub="fuerza">Piernas</button>
+    </div>
+    <div class="card table-scroll">
+      <table id="tabla-running">
+        <thead><tr><th>Fecha</th><th>Tipo</th><th>Km</th><th>Ritmo</th><th>FC</th><th>Cadencia</th><th>Notas</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <table id="tabla-fuerza" style="display:none;">
+        <thead><tr><th>Fecha</th><th>Tipo</th><th>Min</th><th>FC</th><th>RPE</th><th>Banda</th><th>Notas</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ==================== REGISTRAR ==================== -->
+  <section id="tab-registrar" class="tab-panel">
+    <div class="card">
+      <label>Token del webhook (se guarda solo en este navegador)</label>
+      <input type="text" id="reg-token" placeholder="Pega tu token una vez">
+
+      <div class="subtabs" style="margin-top:16px;">
+        <button class="sub-btn active" data-regsub="running">Sesión de running</button>
+        <button class="sub-btn" data-regsub="fuerza">Piernas (bandas)</button>
+      </div>
+
+      <div id="form-running">
+        <label>Fecha</label><input type="date" id="r-fecha">
+        <label>Tipo</label><input type="text" id="r-tipo" placeholder="Entreno, Ritmo, Zona 2...">
+        <label>Distancia (km)</label><input type="text" id="r-distancia">
+        <label>Ritmo (M'SS")</label><input type="text" id="r-ritmo" placeholder="8'30&quot;">
+        <label>FC (LPM)</label><input type="text" id="r-fc">
+        <label>Watts</label><input type="text" id="r-watts">
+        <label>Cadencia (spm)</label><input type="text" id="r-cadencia">
+        <label>GCT (ms)</label><input type="text" id="r-gct">
+        <label>Osc. vertical (cm)</label><input type="text" id="r-oscvert">
+        <label>Notas</label><input type="text" id="r-notas">
+      </div>
+
+      <div id="form-fuerza" style="display:none;">
+        <label>Fecha</label><input type="date" id="f-fecha">
+        <label>Tipo</label><input type="text" id="f-tipo" value="Piernas - Bandas">
+        <label>Duración (min)</label><input type="text" id="f-duracion">
+        <label>FC (LPM)</label><input type="text" id="f-fc">
+        <label>Calorías</label><input type="text" id="f-calorias">
+        <label>Banda</label><input type="text" id="f-banda">
+        <label>Rondas completadas</label><input type="text" id="f-rondas">
+        <label>RPE (1-10)</label><input type="text" id="f-rpe">
+        <label>Molestia rodillas</label><input type="text" id="f-molestia" placeholder="Sí / No">
+        <label>Notas</label><input type="text" id="f-notas">
+      </div>
+
+      <button class="primary" id="btn-registrar">Registrar sesión</button>
+      <p id="registrar-resultado" style="font-size:13px;margin-top:12px;"></p>
+    </div>
+  </section>
+
+</main>
+
+<script>
+const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbz9X2EgL1bW6wyiX0aeBcFE0sHde8ryGTur6bSwvVl9rhGYRymncAX0YAWUyHEDlyzOhA/exec';
+const FECHA_CARRERA = new Date('2026-10-18T00:00:00');
+const META_RITMO_SEG = 6*60+24; // 6'24"/km
+const OBJETIVO_CADENCIA = 158;
+
+let DATA = { historial: [], piernas: [] };
+
+// ---------- Utilidades ----------
+function parseRitmoSeg(str){
+  if(!str) return null;
+  const m = String(str).match(/(\d+)'(\d+)"/);
+  if(!m) return null;
+  return parseInt(m[1])*60 + parseInt(m[2]);
+}
+function segAFormato(seg){
+  if(seg==null || isNaN(seg)) return '—';
+  const m = Math.floor(seg/60);
+  const s = Math.round(seg%60);
+  return m + "'" + String(s).padStart(2,'0') + '"';
+}
+function numOrNull(v){
+  if(v===''||v==null) return null;
+  const n = parseFloat(v);
+  return isNaN(n) ? null : n;
+}
+function getWeekKey(date){
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = (d.getUTCDay()+6)%7;
+  d.setUTCDate(d.getUTCDate()-dayNum+3);
+  const firstThursday = new Date(Date.UTC(d.getUTCFullYear(),0,4));
+  const weekNum = 1+Math.round(((d-firstThursday)/86400000-3+((firstThursday.getUTCDay()+6)%7))/7);
+  return d.getUTCFullYear()+'-W'+String(weekNum).padStart(2,'0');
+}
+function weekStart(date){
+  const d = new Date(date);
+  const day = (d.getDay()+6)%7;
+  d.setDate(d.getDate()-day);
+  d.setHours(0,0,0,0);
+  return d;
+}
+
+// ---------- Carga de datos ----------
+async function cargarDatos(){
+  try{
+    const res = await fetch(WEBHOOK_URL + '?action=data');
+    const json = await res.json();
+    if(!json.ok) throw new Error(json.error || 'Respuesta no ok');
+    DATA.historial = json.historial || [];
+    DATA.piernas = json.piernas || [];
+    document.getElementById('loading').style.display = 'none';
+    document.querySelectorAll('.tab-panel')[0].classList.add('active');
+    renderDashboard();
+    renderHistorial();
+  }catch(err){
+    document.getElementById('loading').textContent = 'No se pudo cargar: ' + err.message;
+  }
+}
+
+// ---------- Dashboard ----------
+function renderDashboard(){
+  const hist = DATA.historial
+    .map(h => ({...h, _fecha: new Date(h['Fecha']), _ritmoSeg: parseRitmoSeg(h['Ritmo']), _km: numOrNull(h['Distancia (km)']), _cad: numOrNull(h['Cadencia (spm)'])}))
+    .filter(h => !isNaN(h._fecha))
+    .sort((a,b)=>a._fecha-b._fecha);
+
+  // Countdown
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  const dias = Math.round((FECHA_CARRERA - hoy)/86400000);
+  document.getElementById('kpi-countdown').textContent = dias >= 0 ? dias : 'Ya pasó';
+
+  // Ritmo reciente (últimas 5 con ritmo válido)
+  const conRitmo = hist.filter(h => h._ritmoSeg);
+  const ultimas5 = conRitmo.slice(-5);
+  const promRitmo = ultimas5.length ? ultimas5.reduce((s,h)=>s+h._ritmoSeg,0)/ultimas5.length : null;
+  document.getElementById('kpi-ritmo').textContent = segAFormato(promRitmo);
+
+  // Volumen semana actual
+  const inicioSemana = weekStart(new Date());
+  const kmSemana = hist.filter(h => h._fecha >= inicioSemana && h._km).reduce((s,h)=>s+h._km,0);
+  document.getElementById('kpi-volumen').textContent = kmSemana.toFixed(1);
+
+  // Gráfico de ritmo + proyección
+  const labels = conRitmo.map(h => h['Fecha']);
+  const valores = conRitmo.map(h => h._ritmoSeg/60);
+  let proyeccionTexto = 'Aún no hay suficientes sesiones con ritmo para proyectar.';
+  if(conRitmo.length >= 4){
+    const ultimos = conRitmo.slice(-8);
+    const x0 = ultimos[0]._fecha.getTime();
+    const xs = ultimos.map(h=>(h._fecha.getTime()-x0)/86400000);
+    const ys = ultimos.map(h=>h._ritmoSeg);
+    const n = xs.length;
+    const sx = xs.reduce((a,b)=>a+b,0), sy = ys.reduce((a,b)=>a+b,0);
+    const sxy = xs.reduce((s,x,i)=>s+x*ys[i],0), sxx = xs.reduce((s,x)=>s+x*x,0);
+    const slope = (n*sxy - sx*sy)/(n*sxx - sx*sx || 1);
+    const intercept = (sy - slope*sx)/n;
+    const diasHastaCarrera = (FECHA_CARRERA.getTime()-x0)/86400000;
+    const proyeccionSeg = intercept + slope*diasHastaCarrera;
+    const diferencia = proyeccionSeg - META_RITMO_SEG;
+    proyeccionTexto = `Proyección al 18-oct: ${segAFormato(proyeccionSeg)}/km — ` +
+      (diferencia <= 0 ? `vas encaminado, ${segAFormato(Math.abs(diferencia))} más rápido que la meta.`
+                        : `${segAFormato(diferencia)}/km por encima de la meta, hay que apretar el ritmo.`);
+  }
+  document.getElementById('proyeccion-texto').textContent = proyeccionTexto;
+
+  new Chart(document.getElementById('chart-ritmo'), {
+    type:'line',
+    data:{ labels, datasets:[
+      { label:'Ritmo', data: valores, borderColor:'#3E6FD9', backgroundColor:'#3E6FD9', tension:0.25, pointRadius:3 },
+      { label:"Meta 18-oct (6'24)", data: labels.map(()=>META_RITMO_SEG/60), borderColor:'#22C55E', borderDash:[6,4], pointRadius:0 },
+      { label:"Meta 12-jul (histórica, 6'36)", data: labels.map(()=>396/60), borderColor:'#D1D5DB', borderDash:[2,3], pointRadius:0 }
+    ]},
+    options:{ responsive:true, scales:{ y:{ reverse:true, title:{display:true,text:'min/km'} } }, plugins:{legend:{position:'bottom', labels:{boxWidth:12,font:{size:11}}}} }
+  });
+
+  // Cadencia
+  const conCad = hist.filter(h => h._cad);
+  new Chart(document.getElementById('chart-cadencia'), {
+    type:'line',
+    data:{ labels: conCad.map(h=>h['Fecha']), datasets:[
+      { label:'Cadencia', data: conCad.map(h=>h._cad), borderColor:'#8B5CF6', tension:0.25, pointRadius:3 },
+      { label:'Objetivo 158', data: conCad.map(()=>OBJETIVO_CADENCIA), borderColor:'#D1D5DB', borderDash:[6,4], pointRadius:0 }
+    ]},
+    options:{ responsive:true, plugins:{legend:{position:'bottom', labels:{boxWidth:12,font:{size:11}}}} }
+  });
+
+  // Volumen semanal (últimas 10 semanas con datos)
+  const porSemana = {};
+  hist.forEach(h => { if(h._km){ const k = getWeekKey(h._fecha); porSemana[k] = (porSemana[k]||0)+h._km; } });
+  const semanas = Object.keys(porSemana).sort().slice(-10);
+  new Chart(document.getElementById('chart-volumen'), {
+    type:'bar',
+    data:{ labels: semanas, datasets:[{ label:'km', data: semanas.map(s=>porSemana[s].toFixed(1)), backgroundColor:'#3E6FD9' }] },
+    options:{ responsive:true, plugins:{legend:{display:false}} }
+  });
+
+  // Piernas: consistencia por semana + racha
+  const piernasConFecha = DATA.piernas.map(p=>({...p,_fecha:new Date(p['Fecha'])})).filter(p=>!isNaN(p._fecha));
+  const porSemanaPiernas = {};
+  piernasConFecha.forEach(p=>{ const k=getWeekKey(p._fecha); porSemanaPiernas[k]=(porSemanaPiernas[k]||0)+1; });
+  const hoyKey = getWeekKey(new Date());
+  let racha = 0;
+  const cursor = new Date(); cursor.setDate(cursor.getDate()-7);
+  for(let i=0;i<52;i++){ const k=getWeekKey(cursor); if((porSemanaPiernas[k]||0)>=2){ racha++; cursor.setDate(cursor.getDate()-7);} else break; }
+  document.getElementById('kpi-racha').textContent = racha;
+  document.getElementById('kpi-racha-sub').textContent = `esta semana: ${porSemanaPiernas[hoyKey]||0}/2 sesiones`;
+
+  const semanasPiernas = Object.keys(porSemanaPiernas).sort().slice(-10);
+  new Chart(document.getElementById('chart-piernas'), {
+    type:'bar',
+    data:{ labels: semanasPiernas, datasets:[{ label:'sesiones', data: semanasPiernas.map(s=>porSemanaPiernas[s]), backgroundColor: semanasPiernas.map(s=>porSemanaPiernas[s]>=2?'#22C55E':'#F59E0B') }] },
+    options:{ responsive:true, plugins:{legend:{display:false}}, scales:{ y:{ ticks:{stepSize:1} } } }
+  });
+}
+
+// ---------- Historial (tablas) ----------
+function renderHistorial(){
+  const tbodyR = document.querySelector('#tabla-running tbody');
+  tbodyR.innerHTML = DATA.historial.slice().reverse().map(h => `
+    <tr><td>${h['Fecha']||''}</td><td>${h['Tipo']||''}</td><td>${h['Distancia (km)']||''}</td>
+    <td>${h['Ritmo']||''}</td><td>${h['FC (LPM)']||''}</td><td>${h['Cadencia (spm)']||''}</td><td>${h['Notas']||''}</td></tr>
+  `).join('');
+
+  const tbodyF = document.querySelector('#tabla-fuerza tbody');
+  tbodyF.innerHTML = DATA.piernas.slice().reverse().map(p => `
+    <tr><td>${p['Fecha']||''}</td><td>${p['Tipo']||''}</td><td>${p['Duración (min)']||''}</td>
+    <td>${p['FC (LPM)']||''}</td><td>${p['RPE (1-10)']||''}</td><td>${p['Banda']||''}</td><td>${p['Notas']||''}</td></tr>
+  `).join('');
+}
+
+// ---------- Tabs ----------
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
+  });
+});
+document.querySelectorAll('.sub-btn[data-sub]').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.sub-btn[data-sub]').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tabla-running').style.display = btn.dataset.sub==='running' ? 'table':'none';
+    document.getElementById('tabla-fuerza').style.display = btn.dataset.sub==='fuerza' ? 'table':'none';
+  });
+});
+document.querySelectorAll('.sub-btn[data-regsub]').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.sub-btn[data-regsub]').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('form-running').style.display = btn.dataset.regsub==='running' ? 'block':'none';
+    document.getElementById('form-fuerza').style.display = btn.dataset.regsub==='fuerza' ? 'block':'none';
+  });
+});
+
+// ---------- Registrar ----------
+const tokenInput = document.getElementById('reg-token');
+tokenInput.value = localStorage.getItem('running_webhook_token') || '';
+tokenInput.addEventListener('change', ()=> localStorage.setItem('running_webhook_token', tokenInput.value.trim()));
+
+document.getElementById('btn-registrar').addEventListener('click', async ()=>{
+  const token = tokenInput.value.trim();
+  const resultadoEl = document.getElementById('registrar-resultado');
+  if(!token){ resultadoEl.textContent = 'Falta el token.'; resultadoEl.style.color = '#991B1B'; return; }
+
+  const esFuerza = document.getElementById('form-fuerza').style.display !== 'none';
+  const params = new URLSearchParams();
+  params.set('token', token);
+
+  if(esFuerza){
+    params.set('hoja','fuerza');
+    params.set('fecha', document.getElementById('f-fecha').value);
+    params.set('tipo', document.getElementById('f-tipo').value);
+    params.set('duracion', document.getElementById('f-duracion').value);
+    params.set('fc', document.getElementById('f-fc').value);
+    params.set('calorias', document.getElementById('f-calorias').value);
+    params.set('banda', document.getElementById('f-banda').value);
+    params.set('rondas', document.getElementById('f-rondas').value);
+    params.set('rpe', document.getElementById('f-rpe').value);
+    params.set('molestia', document.getElementById('f-molestia').value);
+    params.set('notas', document.getElementById('f-notas').value);
+  } else {
+    params.set('hoja','running');
+    params.set('fecha', document.getElementById('r-fecha').value);
+    params.set('tipo', document.getElementById('r-tipo').value);
+    params.set('distancia', document.getElementById('r-distancia').value);
+    params.set('ritmo', document.getElementById('r-ritmo').value);
+    params.set('fc', document.getElementById('r-fc').value);
+    params.set('watts', document.getElementById('r-watts').value);
+    params.set('cadencia', document.getElementById('r-cadencia').value);
+    params.set('gct', document.getElementById('r-gct').value);
+    params.set('oscvert', document.getElementById('r-oscvert').value);
+    params.set('notas', document.getElementById('r-notas').value);
+  }
+
+  resultadoEl.textContent = 'Registrando…';
+  resultadoEl.style.color = '#6B7280';
+  try{
+    const res = await fetch(WEBHOOK_URL + '?' + params.toString());
+    const json = await res.json();
+    if(json.ok){
+      resultadoEl.textContent = '✅ Sesión registrada (fila ' + json.fila_insertada + ').';
+      resultadoEl.style.color = '#166534';
+      cargarDatos();
+    } else {
+      resultadoEl.textContent = '❌ ' + (json.error || 'Error desconocido');
+      resultadoEl.style.color = '#991B1B';
+    }
+  }catch(err){
+    resultadoEl.textContent = '❌ ' + err.message;
+    resultadoEl.style.color = '#991B1B';
+  }
+});
+
+cargarDatos();
+</script>
+</body>
+</html>
