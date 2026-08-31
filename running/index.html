@@ -3,30 +3,77 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="apple-touch-icon" href="../icono-hub-180.png">
+<meta name="apple-mobile-web-app-title" content="Running">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <title>Running — Hub personal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script>
+  (function(){
+    var guardado = localStorage.getItem('tema-dashboard') || 'dark';
+    document.documentElement.setAttribute('data-theme', guardado);
+  })();
+</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
   :root{
-    --accent:#3E6FD9;
-    --teal:#14B8A6;
-    --amber:#F59E0B;
-    --purple:#8B5CF6;
-    --red:#EF4444;
-    --green:#22C55E;
-    --gray:#6B7280;
-    --bg:#F7F8FA;
-    --card:#FFFFFF;
-    --text:#1F2933;
-    --text-secondary:#6B7280;
-    --border:#E5E7EB;
+    --bg:#0F1620;
+    --surface:#172230;
+    --surface-2:#1E2B3B;
+    --border:#2A3A4D;
+    --text:#EDEFF2;
+    --muted:#8A97A6;
+    --green:#4ADE94;
+    --amber:#F5B942;
+    --naranjo:#F2954D;
+    --red:#F0654E;
+    --blue:#6C8EEF;
+    --teal:#2DD4BF;
+    --purple:#A78BFA;
+    /* alias hacia los nombres ya usados en este archivo */
+    --accent:var(--blue);
+    --card:var(--surface);
+    --text-secondary:var(--muted);
+    --gray:var(--muted);
+  }
+  :root[data-theme="light"]{
+    --bg:#FAF7F2;
+    --surface:#FFFFFF;
+    --surface-2:#F1ECE3;
+    --border:#E4DDD0;
+    --text:#2B2621;
+    --muted:#8C8072;
+    --green:#1FA967;
+    --amber:#C98A1F;
+    --naranjo:#D9722E;
+    --red:#D3392A;
+    --blue:#3F63D1;
+    --teal:#1F9E8C;
+    --purple:#7C5CDB;
   }
   *{box-sizing:border-box;margin:0;padding:0;}
   body{
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
     background:var(--bg);
     color:var(--text);
     padding-bottom:60px;
+    transition:background .2s ease, color .2s ease;
   }
+  .theme-toggle{
+    width:38px;
+    height:38px;
+    border-radius:20px;
+    border:1px solid var(--border);
+    background:var(--surface-2);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:var(--text);
+    cursor:pointer;
+    flex-shrink:0;
+  }
+  .theme-toggle svg{width:17px;height:17px;}
 header{
     padding:20px 16px 12px;
     max-width:900px;
@@ -101,17 +148,17 @@ header{
   .kpi{
     background:var(--card);
     border:1px solid var(--border);
-    border-radius:12px;
+    border-radius:14px;
     padding:14px;
   }
   .kpi .label{font-size:12px;color:var(--text-secondary);}
-  .kpi .value{font-size:20px;font-weight:700;margin-top:4px;}
+  .kpi .value{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:700;margin-top:4px;}
   .kpi .sub{font-size:11px;color:var(--text-secondary);margin-top:2px;}
 
   .card{
     background:var(--card);
     border:1px solid var(--border);
-    border-radius:12px;
+    border-radius:14px;
     padding:16px;
     margin-bottom:16px;
   }
@@ -128,7 +175,8 @@ header{
     padding:10px 12px;
     border-radius:8px;
     border:1px solid var(--border);
-    background:#fff;
+    background:var(--card);
+    color:var(--text);
     width:100%;
   }
   label{font-size:13px;font-weight:600;color:var(--text-secondary);display:block;margin:12px 0 4px;}
@@ -147,14 +195,15 @@ header{
     font-size:11px;
     font-weight:600;
   }
-  .badge.green{background:rgba(34,197,94,0.12);color:#166534;}
-  .badge.amber{background:rgba(245,158,11,0.12);color:#92400E;}
-  .badge.red{background:rgba(239,68,68,0.12);color:#991B1B;}
+  .badge.green{background:rgba(74,222,148,0.14);color:var(--green);}
+  .badge.amber{background:rgba(245,185,66,0.14);color:var(--amber);}
+  .badge.red{background:rgba(240,101,78,0.14);color:var(--red);}
   .loading{text-align:center;color:var(--text-secondary);padding:40px 0;}
   .subtabs{display:flex;gap:8px;margin-bottom:12px;}
   .subtabs button{
     border:1px solid var(--border);
-    background:#fff;
+    background:var(--card);
+    color:var(--text);
     padding:6px 12px;
     border-radius:999px;
     font-size:12px;
@@ -170,7 +219,10 @@ header{
     <a class="back" href="../">← Hub personal</a>
     <h1>🏃 Running + piernas</h1>
   </div>
-  <a class="claude-btn" href="https://claude.ai/new" target="_blank" rel="noopener">📷 Analizar con Claude</a>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <a class="claude-btn" href="https://claude.ai/new" target="_blank" rel="noopener">📷 Analizar con Claude</a>
+    <button class="theme-toggle" id="theme-toggle" aria-label="Cambiar tema"></button>
+  </div>
 </header>
 
 <nav class="tabs">
@@ -299,6 +351,10 @@ const META_RITMO_SEG = 6*60+24; // 6'24"/km
 const OBJETIVO_CADENCIA = 158;
 
 let DATA = { historial: [], piernas: [] };
+
+// Colores de Chart.js según el tema activo
+Chart.defaults.color = getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim();
+Chart.defaults.borderColor = getComputedStyle(document.documentElement).getPropertyValue('--border').trim();
 
 // ---------- Utilidades ----------
 function parseRitmoSeg(str){
@@ -496,7 +552,7 @@ tokenInput.addEventListener('change', ()=> localStorage.setItem('running_webhook
 document.getElementById('btn-registrar').addEventListener('click', async ()=>{
   const token = tokenInput.value.trim();
   const resultadoEl = document.getElementById('registrar-resultado');
-  if(!token){ resultadoEl.textContent = 'Falta el token.'; resultadoEl.style.color = '#991B1B'; return; }
+  if(!token){ resultadoEl.textContent = 'Falta el token.'; resultadoEl.style.color = 'var(--red)'; return; }
 
   const esFuerza = document.getElementById('form-fuerza').style.display !== 'none';
   const params = new URLSearchParams();
@@ -529,22 +585,37 @@ document.getElementById('btn-registrar').addEventListener('click', async ()=>{
   }
 
   resultadoEl.textContent = 'Registrando…';
-  resultadoEl.style.color = '#6B7280';
+  resultadoEl.style.color = 'var(--muted)';
   try{
     const res = await fetch(WEBHOOK_URL + '?' + params.toString());
     const json = await res.json();
     if(json.ok){
       resultadoEl.textContent = '✅ Sesión registrada (fila ' + json.fila_insertada + ').';
-      resultadoEl.style.color = '#166534';
+      resultadoEl.style.color = 'var(--green)';
       cargarDatos();
     } else {
       resultadoEl.textContent = '❌ ' + (json.error || 'Error desconocido');
-      resultadoEl.style.color = '#991B1B';
+      resultadoEl.style.color = 'var(--red)';
     }
   }catch(err){
     resultadoEl.textContent = '❌ ' + err.message;
-    resultadoEl.style.color = '#991B1B';
+    resultadoEl.style.color = 'var(--red)';
   }
+});
+
+var ICONO_SOL = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="10" cy="10" r="3.4"/><path d="M10 2v2M10 16v2M18 10h-2M4 10H2M15.5 4.5l-1.4 1.4M5.9 14.1l-1.4 1.4M15.5 15.5l-1.4-1.4M5.9 5.9L4.5 4.5"/></svg>';
+var ICONO_LUNA = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M16.5 12.3A7 7 0 018 3.5a7 7 0 106.9 8.8 6.9 6.9 0 011.6 0z"/></svg>';
+var themeBtn = document.getElementById('theme-toggle');
+function aplicarTema(tema){
+  document.documentElement.setAttribute('data-theme', tema);
+  themeBtn.innerHTML = tema === 'light' ? ICONO_LUNA : ICONO_SOL;
+  localStorage.setItem('tema-dashboard', tema);
+}
+aplicarTema(document.documentElement.getAttribute('data-theme') || 'dark');
+themeBtn.addEventListener('click', function(){
+  var actual = document.documentElement.getAttribute('data-theme') || 'dark';
+  aplicarTema(actual === 'light' ? 'dark' : 'light');
+  location.reload();
 });
 
 cargarDatos();
