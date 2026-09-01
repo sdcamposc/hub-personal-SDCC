@@ -16,6 +16,7 @@
   })();
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
 <style>
   :root{
     --bg:#0F1620;
@@ -138,22 +139,38 @@ header{
   .tab-panel{display:none;}
   .tab-panel.active{display:block;}
 
-  .kpis{
+  .franja{
     display:grid;
-    grid-template-columns:repeat(2,1fr);
-    gap:10px;
-    margin-bottom:18px;
-  }
-  @media(min-width:600px){ .kpis{grid-template-columns:repeat(4,1fr);} }
-  .kpi{
-    background:var(--card);
+    grid-template-columns:repeat(4,1fr);
+    background:var(--surface);
     border:1px solid var(--border);
     border-radius:14px;
-    padding:14px;
+    margin-bottom:18px;
+    overflow:hidden;
   }
-  .kpi .label{font-size:12px;color:var(--text-secondary);}
-  .kpi .value{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:700;margin-top:4px;}
-  .kpi .sub{font-size:11px;color:var(--text-secondary);margin-top:2px;}
+  @media(max-width:640px){.franja{grid-template-columns:1fr 1fr;}}
+  .franja-item{padding:16px 18px;border-left:1px solid var(--border);}
+  .franja-item:first-child,.franja-item:nth-child(3){border-left:none;}
+  @media(max-width:640px){.franja-item:nth-child(3){border-left:1px solid var(--border);}.franja-item:nth-child(odd){border-left:none;}}
+  .franja-top{display:flex;align-items:center;gap:7px;color:var(--muted);margin-bottom:6px;}
+  .franja-icon{font-size:15px;}
+  .franja-label{font-size:12px;text-transform:uppercase;letter-spacing:.06em;}
+  .franja-value{font-family:'JetBrains Mono',monospace;font-size:21px;font-weight:700;}
+  .franja-sub{font-size:11px;color:var(--muted);margin-top:4px;min-height:14px;}
+  .franja-delta{font-weight:600;font-size:11px;margin-left:4px;}
+  .franja-delta.up{color:var(--red);}
+  .franja-delta.down{color:var(--green);}
+
+  .detalle-grid{display:grid;grid-template-columns:1fr;gap:16px;}
+  @media(min-width:640px){.detalle-grid{grid-template-columns:1fr 1fr;}}
+  .detalle-grid .card{margin-bottom:0;}
+
+  .piernas-dias-header,.piernas-fila{display:grid;grid-template-columns:repeat(7,1fr) 28px;gap:5px;align-items:center;}
+  .piernas-dias-header{margin-bottom:8px;font-size:10px;color:var(--muted);text-align:center;}
+  .piernas-fila{margin-bottom:5px;}
+  .piernas-dia{aspect-ratio:1;border-radius:5px;background:var(--surface-2);border:1px solid var(--border);}
+  .piernas-dia.hecho{background:var(--green);border-color:var(--green);}
+  .piernas-check{font-size:14px;text-align:center;}
 
   .card{
     background:var(--card);
@@ -237,26 +254,45 @@ header{
 
   <!-- ==================== DASHBOARD ==================== -->
   <section id="tab-dashboard" class="tab-panel">
-    <div class="kpis">
-      <div class="kpi">
-        <div class="label">Días para la carrera</div>
-        <div class="value" id="kpi-countdown">—</div>
-        <div class="sub">18 oct 2026 · meta sub-32:00</div>
+    <div class="franja">
+      <div class="franja-item">
+        <div class="franja-top"><span class="franja-icon">🏁</span><span class="franja-label">Días para la carrera</span></div>
+        <div class="franja-value" id="kpi-countdown">—</div>
+        <div class="franja-sub">18 oct · meta sub-32:00</div>
       </div>
-      <div class="kpi">
-        <div class="label">Ritmo reciente</div>
-        <div class="value" id="kpi-ritmo">—</div>
-        <div class="sub">promedio últimas 5 sesiones</div>
+      <div class="franja-item">
+        <div class="franja-top"><span class="franja-icon">👟</span><span class="franja-label">Ritmo reciente</span></div>
+        <div class="franja-value" id="kpi-ritmo">—<span class="franja-delta" id="kpi-ritmo-delta"></span></div>
+        <div class="franja-sub">promedio últimas 5 sesiones</div>
       </div>
-      <div class="kpi">
-        <div class="label">Volumen semana</div>
-        <div class="value" id="kpi-volumen">—</div>
-        <div class="sub" id="kpi-volumen-sub">km esta semana</div>
+      <div class="franja-item">
+        <div class="franja-top"><span class="franja-icon">📏</span><span class="franja-label">Volumen semana</span></div>
+        <div class="franja-value" id="kpi-volumen">—</div>
+        <div class="franja-sub" id="kpi-volumen-sub">km esta semana</div>
       </div>
-      <div class="kpi">
-        <div class="label">Racha piernas</div>
-        <div class="value" id="kpi-racha">—</div>
-        <div class="sub" id="kpi-racha-sub">semanas con 2+ sesiones</div>
+      <div class="franja-item">
+        <div class="franja-top"><span class="franja-icon">🦵</span><span class="franja-label">Racha piernas</span></div>
+        <div class="franja-value" id="kpi-racha">—</div>
+        <div class="franja-sub" id="kpi-racha-sub">semanas con 2+ sesiones</div>
+      </div>
+    </div>
+
+    <div class="detalle-grid" style="margin-bottom:16px;">
+      <div class="card">
+        <h2>📋 Sesión anterior</h2>
+        <div id="sesion-anterior-detalle" style="font-size:13px;line-height:1.7;color:var(--text);"></div>
+      </div>
+      <div class="card">
+        <h2>🎯 Próxima sesión</h2>
+        <div id="proxima-sesion-display" style="font-size:13px;line-height:1.6;"></div>
+        <details style="margin-top:10px;">
+          <summary style="cursor:pointer;font-size:12px;color:var(--muted);">Editar nota manual</summary>
+          <textarea id="proxima-sesion-input" rows="3" style="width:100%;margin-top:8px;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);font-family:inherit;font-size:13px;" placeholder="Ej: series 6x400 a ritmo fuerte"></textarea>
+          <div style="display:flex;align-items:center;gap:10px;margin-top:8px;">
+            <button class="primary" id="btn-guardar-nota" style="width:auto;margin-top:0;padding:8px 16px;">Guardar</button>
+            <span id="nota-guardar-resultado" style="font-size:12px;"></span>
+          </div>
+        </details>
       </div>
     </div>
 
@@ -277,8 +313,8 @@ header{
     </div>
 
     <div class="card">
-      <h2>Piernas — consistencia</h2>
-      <canvas id="chart-piernas" height="160"></canvas>
+      <h2>Piernas — últimas 8 semanas</h2>
+      <div id="piernas-grid"></div>
     </div>
   </section>
 
@@ -352,9 +388,12 @@ const OBJETIVO_CADENCIA = 158;
 
 let DATA = { historial: [], piernas: [] };
 
-// Colores de Chart.js según el tema activo
+Chart.register(ChartDataLabels);
+Chart.defaults.set('plugins.datalabels', { display: false });
 Chart.defaults.color = getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim();
 Chart.defaults.borderColor = getComputedStyle(document.documentElement).getPropertyValue('--border').trim();
+
+function cssVar(nombre){ return getComputedStyle(document.documentElement).getPropertyValue(nombre).trim(); }
 
 // ---------- Utilidades ----------
 function parseRitmoSeg(str){
@@ -398,10 +437,14 @@ async function cargarDatos(){
     if(!json.ok) throw new Error(json.error || 'Respuesta no ok');
     DATA.historial = json.historial || [];
     DATA.piernas = json.piernas || [];
+    DATA.notaProximaSesion = json.notaProximaSesion || '';
     document.getElementById('loading').style.display = 'none';
     document.querySelectorAll('.tab-panel')[0].classList.add('active');
     renderDashboard();
     renderHistorial();
+    renderSesionAnterior();
+    renderProximaSesion();
+    renderPiernasGrid();
   }catch(err){
     document.getElementById('loading').textContent = 'No se pudo cargar: ' + err.message;
   }
@@ -417,13 +460,23 @@ function renderDashboard(){
   // Countdown
   const hoy = new Date(); hoy.setHours(0,0,0,0);
   const dias = Math.round((FECHA_CARRERA - hoy)/86400000);
-  document.getElementById('kpi-countdown').textContent = dias >= 0 ? dias : 'Ya pasó';
+  document.getElementById('kpi-countdown').textContent = (dias >= 0 ? dias : 'Ya pasó') + ' 🏁';
 
-  // Ritmo reciente (últimas 5 con ritmo válido)
+  // Ritmo reciente (últimas 5 con ritmo válido) + delta vs meta
   const conRitmo = hist.filter(h => h._ritmoSeg);
   const ultimas5 = conRitmo.slice(-5);
   const promRitmo = ultimas5.length ? ultimas5.reduce((s,h)=>s+h._ritmoSeg,0)/ultimas5.length : null;
-  document.getElementById('kpi-ritmo').textContent = segAFormato(promRitmo);
+  document.getElementById('kpi-ritmo').childNodes[0].textContent = segAFormato(promRitmo);
+  const deltaEl = document.getElementById('kpi-ritmo-delta');
+  if(promRitmo){
+    const diff = promRitmo - META_RITMO_SEG;
+    const clase = diff <= 0 ? 'down' : 'up';
+    const flecha = diff <= 0 ? '▼' : '▲';
+    deltaEl.className = 'franja-delta ' + clase;
+    deltaEl.textContent = ' ' + flecha + ' ' + segAFormato(Math.abs(diff));
+  } else {
+    deltaEl.textContent = '';
+  }
 
   // Volumen semana actual
   const inicioSemana = weekStart(new Date());
@@ -456,11 +509,13 @@ function renderDashboard(){
   new Chart(document.getElementById('chart-ritmo'), {
     type:'line',
     data:{ labels, datasets:[
-      { label:'Ritmo', data: valores, borderColor:'#3E6FD9', backgroundColor:'#3E6FD9', tension:0.25, pointRadius:3 },
-      { label:"Meta 18-oct (6'24)", data: labels.map(()=>META_RITMO_SEG/60), borderColor:'#22C55E', borderDash:[6,4], pointRadius:0 },
-      { label:"Meta 12-jul (histórica, 6'36)", data: labels.map(()=>396/60), borderColor:'#D1D5DB', borderDash:[2,3], pointRadius:0 }
+      { label:'Ritmo', data: valores, borderColor:cssVar('--blue'), backgroundColor:cssVar('--blue'), tension:0.25, pointRadius:3,
+        datalabels:{ display:true, align:'top', offset:6, color:cssVar('--text'), font:{family:'JetBrains Mono', size:10, weight:'700'},
+          formatter:v=>segAFormato(v*60), backgroundColor:cssVar('--surface-2'), borderRadius:4, padding:{top:2,bottom:2,left:5,right:5} } },
+      { label:"Meta 18-oct (6'24)", data: labels.map(()=>META_RITMO_SEG/60), borderColor:cssVar('--green'), borderDash:[6,4], pointRadius:0 },
+      { label:"Meta 12-jul (histórica, 6'36)", data: labels.map(()=>396/60), borderColor:cssVar('--border'), borderDash:[2,3], pointRadius:0 }
     ]},
-    options:{ responsive:true, scales:{ y:{ reverse:true, title:{display:true,text:'min/km'} } }, plugins:{legend:{position:'bottom', labels:{boxWidth:12,font:{size:11}}}} }
+    options:{ responsive:true, layout:{padding:{top:22}}, scales:{ y:{ reverse:true, title:{display:true,text:'min/km'} } }, plugins:{legend:{position:'bottom', labels:{boxWidth:12,font:{size:11}}}} }
   });
 
   // Cadencia
@@ -468,10 +523,12 @@ function renderDashboard(){
   new Chart(document.getElementById('chart-cadencia'), {
     type:'line',
     data:{ labels: conCad.map(h=>h['Fecha']), datasets:[
-      { label:'Cadencia', data: conCad.map(h=>h._cad), borderColor:'#8B5CF6', tension:0.25, pointRadius:3 },
-      { label:'Objetivo 158', data: conCad.map(()=>OBJETIVO_CADENCIA), borderColor:'#D1D5DB', borderDash:[6,4], pointRadius:0 }
+      { label:'Cadencia', data: conCad.map(h=>h._cad), borderColor:cssVar('--purple'), tension:0.25, pointRadius:3,
+        datalabels:{ display:true, align:'top', offset:6, color:cssVar('--text'), font:{family:'JetBrains Mono', size:10, weight:'700'},
+          formatter:v=>Math.round(v), backgroundColor:cssVar('--surface-2'), borderRadius:4, padding:{top:2,bottom:2,left:5,right:5} } },
+      { label:'Objetivo 158', data: conCad.map(()=>OBJETIVO_CADENCIA), borderColor:cssVar('--border'), borderDash:[6,4], pointRadius:0 }
     ]},
-    options:{ responsive:true, plugins:{legend:{position:'bottom', labels:{boxWidth:12,font:{size:11}}}} }
+    options:{ responsive:true, layout:{padding:{top:22}}, plugins:{legend:{position:'bottom', labels:{boxWidth:12,font:{size:11}}}} }
   });
 
   // Volumen semanal (últimas 10 semanas con datos)
@@ -480,11 +537,13 @@ function renderDashboard(){
   const semanas = Object.keys(porSemana).sort().slice(-10);
   new Chart(document.getElementById('chart-volumen'), {
     type:'bar',
-    data:{ labels: semanas, datasets:[{ label:'km', data: semanas.map(s=>porSemana[s].toFixed(1)), backgroundColor:'#3E6FD9' }] },
-    options:{ responsive:true, plugins:{legend:{display:false}} }
+    data:{ labels: semanas, datasets:[{ label:'km', data: semanas.map(s=>Number(porSemana[s].toFixed(1))), backgroundColor:cssVar('--blue'),
+      datalabels:{ display:true, align:'end', anchor:'end', offset:2, color:cssVar('--text'), font:{family:'JetBrains Mono', size:10, weight:'700'},
+        formatter:v=>v+' km' } }] },
+    options:{ responsive:true, layout:{padding:{top:20}}, plugins:{legend:{display:false}} }
   });
 
-  // Piernas: consistencia por semana + racha
+  // Racha piernas (usada también en la franja de KPIs)
   const piernasConFecha = DATA.piernas.map(p=>({...p,_fecha:new Date(p['Fecha'])})).filter(p=>!isNaN(p._fecha));
   const porSemanaPiernas = {};
   piernasConFecha.forEach(p=>{ const k=getWeekKey(p._fecha); porSemanaPiernas[k]=(porSemanaPiernas[k]||0)+1; });
@@ -494,13 +553,92 @@ function renderDashboard(){
   for(let i=0;i<52;i++){ const k=getWeekKey(cursor); if((porSemanaPiernas[k]||0)>=2){ racha++; cursor.setDate(cursor.getDate()-7);} else break; }
   document.getElementById('kpi-racha').textContent = racha;
   document.getElementById('kpi-racha-sub').textContent = `esta semana: ${porSemanaPiernas[hoyKey]||0}/2 sesiones`;
+}
 
-  const semanasPiernas = Object.keys(porSemanaPiernas).sort().slice(-10);
-  new Chart(document.getElementById('chart-piernas'), {
-    type:'bar',
-    data:{ labels: semanasPiernas, datasets:[{ label:'sesiones', data: semanasPiernas.map(s=>porSemanaPiernas[s]), backgroundColor: semanasPiernas.map(s=>porSemanaPiernas[s]>=2?'#22C55E':'#F59E0B') }] },
-    options:{ responsive:true, plugins:{legend:{display:false}}, scales:{ y:{ ticks:{stepSize:1} } } }
-  });
+// ---------- Sesión anterior ----------
+function renderSesionAnterior(){
+  const hist = DATA.historial
+    .map(h => ({...h, _fecha: new Date(h['Fecha'])}))
+    .filter(h => !isNaN(h._fecha))
+    .sort((a,b) => a._fecha - b._fecha);
+  const el = document.getElementById('sesion-anterior-detalle');
+  if(!hist.length){ el.textContent = 'Sin sesiones registradas aún.'; return; }
+  const u = hist[hist.length - 1];
+  const detalles = [
+    u['Distancia (km)'] ? u['Distancia (km)'] + ' km' : '',
+    u['Ritmo'] ? u['Ritmo'] + '/km' : '',
+    u['FC (LPM)'] ? 'FC ' + u['FC (LPM)'] : '',
+    u['Cadencia (spm)'] ? 'Cadencia ' + u['Cadencia (spm)'] : ''
+  ].filter(Boolean).join(' · ');
+  el.innerHTML = `<b>${u['Fecha']}</b> — ${u['Tipo']||''}<br>${detalles || 'Sin métricas adicionales'}` +
+    (u['Notas'] ? `<br><span style="color:var(--text-secondary);">${u['Notas']}</span>` : '');
+}
+
+// ---------- Próxima sesión ----------
+function sugerenciaAutomatica_(){
+  const hist = DATA.historial.map(h=>({...h,_fecha:new Date(h['Fecha'])})).filter(h=>!isNaN(h._fecha)).sort((a,b)=>a._fecha-b._fecha);
+  if(!hist.length) return 'Registra tu primera sesión para empezar a recibir sugerencias.';
+  const ultima = hist[hist.length-1];
+  const diasDesdeUltima = Math.round((new Date() - ultima._fecha)/86400000);
+  const diasCarrera = Math.round((FECHA_CARRERA - new Date())/86400000);
+  if(diasDesdeUltima <= 1) return 'Recuperación suave: trote fácil o descanso activo.';
+  if(diasCarrera <= 14 && diasCarrera >= 0) return 'Recta final: prioriza series o ritmo objetivo (~6\'24"/km).';
+  return 'Sesión de base: trote a ritmo cómodo, conversacional.';
+}
+
+function renderProximaSesion(){
+  const nota = (DATA.notaProximaSesion || '').trim();
+  document.getElementById('proxima-sesion-input').value = nota;
+  const display = document.getElementById('proxima-sesion-display');
+  display.innerHTML = nota
+    ? nota
+    : `<em style="color:var(--text-secondary);">${sugerenciaAutomatica_()}</em> <span style="font-size:11px;color:var(--text-secondary);">(sugerencia automática)</span>`;
+}
+
+document.getElementById('btn-guardar-nota').addEventListener('click', async () => {
+  const token = localStorage.getItem('running_webhook_token') || '';
+  const resultado = document.getElementById('nota-guardar-resultado');
+  if(!token){ resultado.textContent = 'Falta el token (pégalo en la pestaña Registrar).'; resultado.style.color = 'var(--red)'; return; }
+  const texto = document.getElementById('proxima-sesion-input').value;
+  resultado.textContent = 'Guardando…'; resultado.style.color = 'var(--text-secondary)';
+  try{
+    const params = new URLSearchParams({ token, hoja:'nota', texto });
+    const res = await fetch(WEBHOOK_URL + '?' + params.toString());
+    const json = await res.json();
+    if(json.ok){
+      resultado.textContent = '✅ Guardado.'; resultado.style.color = 'var(--green)';
+      DATA.notaProximaSesion = texto;
+      renderProximaSesion();
+    } else {
+      resultado.textContent = '❌ ' + (json.error || 'Error'); resultado.style.color = 'var(--red)';
+    }
+  }catch(err){
+    resultado.textContent = '❌ ' + err.message; resultado.style.color = 'var(--red)';
+  }
+});
+
+// ---------- Grilla de piernas (últimas 8 semanas) ----------
+function renderPiernasGrid(){
+  const diasSet = new Set(DATA.piernas.map(p => p['Fecha']));
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  const diaSemanaHoy = (hoy.getDay() + 6) % 7; // 0 = lunes
+  const lunesActual = new Date(hoy); lunesActual.setDate(hoy.getDate() - diaSemanaHoy);
+
+  let filas = '';
+  for(let offset = 7; offset >= 0; offset--){
+    const lunesSemana = new Date(lunesActual); lunesSemana.setDate(lunesActual.getDate() - offset*7);
+    let celdas = '', cuenta = 0;
+    for(let d = 0; d < 7; d++){
+      const dia = new Date(lunesSemana); dia.setDate(lunesSemana.getDate() + d);
+      const key = dia.getFullYear() + '-' + String(dia.getMonth()+1).padStart(2,'0') + '-' + String(dia.getDate()).padStart(2,'0');
+      const hecho = diasSet.has(key);
+      if(hecho) cuenta++;
+      celdas += `<div class="piernas-dia${hecho ? ' hecho' : ''}" title="${key}"></div>`;
+    }
+    filas += `<div class="piernas-fila">${celdas}<div class="piernas-check">${cuenta >= 2 ? '✅' : '❌'}</div></div>`;
+  }
+  document.getElementById('piernas-grid').innerHTML =
+    '<div class="piernas-dias-header"><div>L</div><div>M</div><div>M</div><div>J</div><div>V</div><div>S</div><div>D</div><div></div></div>' + filas;
 }
 
 // ---------- Historial (tablas) ----------
