@@ -129,6 +129,14 @@
     padding:5px 11px; font-size:11px; font-family:'Plus Jakarta Sans',sans-serif; cursor:pointer;
   }
   .chip.active{background:var(--blue); color:#0F1620; border-color:var(--blue); font-weight:600;}
+  .select-fijo{
+    background:var(--surface-2); border:1px solid var(--border); border-radius:6px;
+    color:var(--text); padding:4px 6px; font-size:11px; font-family:'Plus Jakarta Sans',sans-serif;
+  }
+  .piso-card{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px;}
+  .piso-row{display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border); font-size:13px;}
+  .piso-row:last-child{border-bottom:none;}
+  .piso-total{font-family:'JetBrains Mono',monospace; font-weight:700;}
   .delta{font-weight:600;}
   .delta.up{color:var(--red);}
   .delta.down{color:var(--green);}
@@ -298,6 +306,13 @@
   </section>
 
   <section>
+    <div class="section-title">Piso mensual <span class="n">(según lo que marcaste)</span></div>
+    <div class="piso-card" id="pisoCard">
+      <div style="color:var(--muted); font-size:13px;">Marca líneas como Duro/Flexible en la tabla de Movimientos para ver esto.</div>
+    </div>
+  </section>
+
+  <section>
     <div class="section-title-row">
       <div class="section-title">Ajustar topes</div>
       <button class="chip" id="btnToggleTopes" type="button" style="margin:0;">Editar</button>
@@ -390,7 +405,7 @@
       <div class="chips-row" id="chipsMedio"></div>
       <div class="table-scroll">
       <table>
-        <thead><tr><th>Fecha</th><th>Tipo</th><th>Categoría</th><th>Comercio</th><th style="text-align:right;">Monto</th></tr></thead>
+        <thead><tr><th>Fecha</th><th>Tipo</th><th>Categoría</th><th>Comercio</th><th style="text-align:right;">Monto</th><th>Fijo</th></tr></thead>
         <tbody id="tablaBody"><tr><td colspan="5" style="color:var(--muted);">Cargando…</td></tr></tbody>
       </table>
       </div>
@@ -521,6 +536,7 @@ Promise.all([
   renderTendenciaCategoria();
   renderYTD(hoy.getFullYear(), hoy.getMonth());
   renderConciliacion(conciliacionData);
+  renderPisoMensual();
 
   document.getElementById('btnExportar').addEventListener('click', () => window.print());
   document.getElementById('btnToggleTopes').addEventListener('click', () => {
@@ -878,15 +894,41 @@ function pintarTabla(lista, filtro){
     const pasaMedio = !FILTRO_MEDIO || (m['Medio']||'').trim() === FILTRO_MEDIO;
     return pasaTexto && pasaCuenta && pasaMedio;
   });
-  tbody.innerHTML = filtrados.length ? '' : '<tr><td colspan="5" style="color:var(--muted);">Sin resultados</td></tr>';
+  tbody.innerHTML = filtrados.length ? '' : '<tr><td colspan="6" style="color:var(--muted);">Sin resultados</td></tr>';
   filtrados.forEach(m => {
     const tr = document.createElement('tr');
     const tipo = m['Tipo'] || '';
     const claseTag = 'tag ' + (tipo === 'Gasto' ? 'tag-gasto' : tipo === 'Ingreso' ? 'tag-ingreso' : tipo === 'Traspaso' ? 'tag-traspaso' : tipo === 'Ahorro' ? 'tag-ahorro' : '');
     const cat = (m['Categoría']||'').trim();
     const catConEmoji = cat ? ((ICONOS_CAT[cat] || '') + ' ' + cat) : '—';
-    tr.innerHTML = `<td>${m['Fecha']||''}</td><td><span class="${claseTag}">${tipo}</span></td><td>${catConEmoji}</td><td>${m['Comercio_Descripción']||''}</td><td class="amt">${fmt(m._monto)}</td>`;
+    const idMov = m['ID'] || '';
+    const fijoActual = (m['Tipo_Fijo']||'').trim();
+    const selectId = 'fijo-' + idMov;
+    tr.innerHTML = `<td>${m['Fecha']||''}</td><td><span class="${claseTag}">${tipo}</span></td><td>${catConEmoji}</td><td>${m['Comercio_Descripción']||''}</td><td class="amt">${fmt(m._monto)}</td>
+      <td><select id="${selectId}" class="select-fijo" data-id="${idMov}">
+        <option value="" ${fijoActual===''?'selected':''}>—</option>
+        <option value="Duro" ${fijoActual==='Duro'?'selected':''}>Duro</option>
+        <option value="Flexible" ${fijoActual==='Flexible'?'selected':''}>Flexible</option>
+      </select></td>`;
     tbody.appendChild(tr);
+  });
+  document.querySelectorAll('.select-fijo').forEach(sel => {
+    sel.addEventListener('change', () => guardarFijo_(sel.dataset.id, sel.value, sel));
+  });
+}
+
+function guardarFijo_(id, tipoFijo, selectEl){
+  if(!id){ return; }
+  selectEl.disabled = true;
+  fetch(WEBAPP_URL, {
+    method:'POST',
+    body: JSON.stringify({ accion:'marcarFijo', secreto: DASHBOARD_SECRET, id: id, tipoFijo: tipoFijo })
+  }).then(r => r.json()).then(r => {
+    selectEl.disabled = false;
+    if(!r.ok){ alert('No se pudo guardar: ' + (r.error||'error')); }
+  }).catch(() => {
+    selectEl.disabled = false;
+    alert('No se pudo conectar para guardar.');
   });
 }
 
@@ -1023,6 +1065,39 @@ function guardarTope_(categoria, valor, btn){
     btn.disabled = false;
     msg.textContent = '⚠️ No se pudo conectar.'; msg.style.color = 'var(--red)';
   });
+}
+
+// ============ PISO MENSUAL ============
+function renderPisoMensual(){
+  const marcados = MOVS.filter(m => m['Tipo'] === 'Gasto' && (m['Tipo_Fijo']||'').trim() !== '');
+  const cont = document.getElementById('pisoCard');
+  if(!marcados.length){
+    cont.innerHTML = '<div style="color:var(--muted); font-size:13px;">Aún no has marcado ninguna línea como Duro/Flexible en la tabla de Movimientos.</div>';
+    return;
+  }
+
+  // Promedio mensual de lo marcado, sobre los meses donde hay al menos una línea marcada
+  const porMes = {};
+  marcados.forEach(m => {
+    if(!m._fecha) return;
+    const key = m._fecha.getFullYear() + '-' + m._fecha.getMonth();
+    if(!porMes[key]) porMes[key] = { duro: 0, flexible: 0 };
+    const tipo = (m['Tipo_Fijo']||'').trim();
+    if(tipo === 'Duro') porMes[key].duro += m._monto;
+    else if(tipo === 'Flexible') porMes[key].flexible += m._monto;
+  });
+  const nMeses = Object.keys(porMes).length;
+  let totalDuro = 0, totalFlexible = 0;
+  Object.values(porMes).forEach(v => { totalDuro += v.duro; totalFlexible += v.flexible; });
+  const promDuro = totalDuro / nMeses;
+  const promFlexible = totalFlexible / nMeses;
+
+  cont.innerHTML = `
+    <div class="piso-row"><span>🔴 Duro (promedio mensual)</span><span class="piso-total" style="color:var(--red)">${fmt(promDuro)}</span></div>
+    <div class="piso-row"><span>🟡 Flexible (promedio mensual)</span><span class="piso-total" style="color:var(--naranjo)">${fmt(promFlexible)}</span></div>
+    <div class="piso-row"><span><b>Piso total estimado</b></span><span class="piso-total" style="color:var(--text); font-size:15px;">${fmt(promDuro+promFlexible)}</span></div>
+    <div style="color:var(--muted); font-size:11px; margin-top:8px;">Basado en ${nMeses} mes(es) con líneas marcadas — mientras más meses marques, más preciso.</div>
+  `;
 }
 </script>
 </body>
