@@ -123,6 +123,7 @@
   }
   .icon.gastos{background:rgba(62,111,217,0.10);}
   .icon.running{background:rgba(20,184,166,0.10);}
+  .icon.gastos2{background:rgba(74,222,148,0.10);}
   .card-body{flex:1;}
   .card-body h2{
     font-size:17px;
@@ -136,6 +137,11 @@
   .chevron{
     color:var(--text-secondary);
     font-size:18px;
+  }
+  .badge-beta{
+    font-size:10px; font-weight:700; color:var(--green);
+    background:rgba(74,222,148,0.14); padding:2px 7px; border-radius:20px;
+    margin-left:6px; vertical-align:middle;
   }
   footer{
     margin-top:40px;
@@ -159,6 +165,15 @@
       <div class="card-body">
         <h2>Gastos</h2>
         <p>Control financiero, categorías y conciliación</p>
+      </div>
+      <div class="chevron">›</div>
+    </a>
+
+    <a class="card" href="gastos/gastos2.html">
+      <div class="icon gastos2">✨</div>
+      <div class="card-body">
+        <h2>Gastos 2.0 <span class="badge-beta">BETA</span></h2>
+        <p>Zona Dura/Flexible, termómetro, heatmap y runway</p>
       </div>
       <div class="chevron">›</div>
     </a>
