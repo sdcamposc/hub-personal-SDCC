@@ -174,6 +174,7 @@
   .ledger-amt-wrap{text-align:right;}
   .ledger-amt{font-family:'JetBrains Mono',monospace; font-size:12px; white-space:nowrap;}
   .ledger-delta{font-size:10px; color:var(--muted); margin-top:1px; white-space:nowrap;}
+  .ledger-duro{font-size:10px; color:var(--blue); margin-top:2px; white-space:nowrap; font-weight:600;}
   .ledger-spark{opacity:.85; flex-shrink:0;}
   @media(max-width:460px){.ledger-spark{display:none;}}
   .ledger-bar{height:6px; background:var(--surface-2); border-radius:4px; overflow:hidden;}
@@ -638,7 +639,12 @@ function totalesDeMes(anio, mesIdx){
     const c = (m['Categoría']||'Sin categoría').trim();
     totalesAhorroCat[c] = (totalesAhorroCat[c]||0) + m._monto;
   });
-  return { delMes, gasto, ingreso, ahorro, totalesCat, totalesAhorroCat, nMovs: delMes.filter(m=>m['Tipo']==='Gasto').length };
+  const totalesDuroCat = {};
+  delMes.filter(m=>m['Tipo']==='Gasto' && (m['Tipo_Fijo']||'').trim()==='Duro').forEach(m=>{
+    const c = (m['Categoría']||'Sin categoría').trim();
+    totalesDuroCat[c] = (totalesDuroCat[c]||0) + m._monto;
+  });
+  return { delMes, gasto, ingreso, ahorro, totalesCat, totalesAhorroCat, totalesDuroCat, nMovs: delMes.filter(m=>m['Tipo']==='Gasto').length };
 }
 
 function deltaTexto(actual, anterior){
@@ -743,6 +749,9 @@ function renderMes(anio, mesIdx){
       else color = 'var(--green)';
     }
 
+    const duro = actual.totalesDuroCat[cat] || 0;
+    const duroTexto = duro > 0 ? `<div class="ledger-duro">🔒 ${fmt(duro)} fijo (${Math.round(duro/gastado*100)}%)</div>` : '';
+
     const row = document.createElement('div');
     row.className = 'ledger-row';
     row.style.cursor = 'pointer';
@@ -762,6 +771,7 @@ function renderMes(anio, mesIdx){
           <div class="ledger-amt-wrap">
             <div class="ledger-amt" style="color:${color}">${fmt(gastado)}${tope ? ' / ' + fmt(tope) : ''}</div>
             <div class="ledger-delta">${categoriaDeltaTexto(gastado, anteriorGastado)}</div>
+            ${duroTexto}
           </div>
         </div>
       </div>
