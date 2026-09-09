@@ -56,6 +56,11 @@
     cursor:pointer; color:var(--text); flex-shrink:0;
   }
   .theme-toggle svg{width:17px; height:17px;}
+  .link-cruzado{
+    font-size:12px; color:var(--muted); text-decoration:none; padding:8px 12px;
+    border:1px solid var(--border); border-radius:20px; background:var(--surface-2); white-space:nowrap;
+  }
+  .link-cruzado:hover{color:var(--text); border-color:var(--blue);}
 
   /* 2 columnas en desktop, 1 en celular */
   .layout{display:grid; grid-template-columns:1fr; gap:0;}
@@ -238,6 +243,7 @@
     <div class="header-row">
       <h1>Cómo va el mes</h1>
       <div class="header-actions">
+        <a href="gastos2.html" class="link-cruzado" title="Probar la vista 2.0">Probar V2 →</a>
         <select id="selectorMes"></select>
         <button class="theme-toggle" id="btnExportar" title="Exportar reporte del mes" aria-label="Exportar reporte">🖨️</button>
         <button class="theme-toggle" id="themeToggle" title="Cambiar tema" aria-label="Cambiar tema claro/oscuro"></button>
