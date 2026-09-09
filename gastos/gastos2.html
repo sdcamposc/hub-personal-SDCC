@@ -107,9 +107,9 @@
   .ytd-item b{color:var(--text); margin-left:4px;}
 
   .termometro-strip{
-    display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:18px; margin-bottom:24px;
+    display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-top:18px; margin-bottom:24px;
   }
-  @media(max-width:640px){.termometro-strip{grid-template-columns:1fr;}}
+  @media(max-width:900px){.termometro-strip{grid-template-columns:1fr;}}
   .term-block{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px;}
   .term-label{font-size:12px; color:var(--muted); margin-bottom:10px;}
   .term-bar-wrap{height:10px; background:var(--surface-2); border-radius:6px; overflow:hidden; margin-bottom:8px;}
@@ -120,11 +120,12 @@
   .heatmap-card{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px;}
   .heatmap-grid{display:grid; grid-template-columns:repeat(7, 1fr); gap:4px;}
   .heat-cell{
-    aspect-ratio:1; border-radius:5px; display:flex; align-items:center; justify-content:center;
-    font-size:10px; color:var(--muted); background:var(--surface-2); position:relative;
+    aspect-ratio:1; border-radius:5px; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    font-size:9px; background:var(--surface-2); position:relative; gap:1px; padding:2px;
   }
   .heat-cell.hoy{outline:2px solid var(--blue); outline-offset:-1px;}
-  .heat-cell .heat-num{font-family:'JetBrains Mono',monospace; font-size:10px;}
+  .heat-cell .heat-num{font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:600;}
+  .heat-cell .heat-monto{font-family:'JetBrains Mono',monospace; font-size:8px; opacity:.85;}
   .heatmap-legend{display:flex; align-items:center; gap:5px; margin-top:12px; font-size:10px; color:var(--muted);}
   .heat-swatch{width:14px; height:14px; border-radius:3px;}
 
@@ -307,14 +308,22 @@
 
   <div class="termometro-strip" id="termometroStrip">
     <div class="term-block">
-      <div class="term-label">🌡️ % de tu ingreso ya comprometido (piso Duro)</div>
+      <div class="term-label">🌡️ % de tu sueldo proyectado ya comprometido (Duro)</div>
       <div class="term-bar-wrap"><div class="term-bar-fill" id="termBarFill" style="width:0%"></div></div>
       <div class="term-value mono" id="termValue">—</div>
+      <div class="term-sub" id="termSubReal"></div>
+    </div>
+    <div class="term-block">
+      <div class="term-label">📊 Duro como % de tu gasto total del mes</div>
+      <div class="term-bar-wrap"><div class="term-bar-fill" id="termBarFillGasto" style="width:0%"></div></div>
+      <div class="term-value mono" id="termValueGasto">—</div>
+      <div class="term-sub" id="termSubHistorico"></div>
     </div>
     <div class="term-block">
       <div class="term-label">🏃 Runway (ahorro acumulado ÷ piso Duro mensual)</div>
       <div class="term-value mono" id="runwayValue">—</div>
       <div class="term-sub" id="runwaySub"></div>
+      <div class="term-sub" id="runwayMeta" style="margin-top:6px; color:var(--blue); font-weight:600;"></div>
     </div>
   </div>
 
@@ -1201,20 +1210,53 @@ function renderPisoMensual(){
 function renderTermometro(anio, mesIdx){
   const t = totalesDeMes(anio, mesIdx);
   const pisoDuro = Object.values(t.totalesDuroCat).reduce((a,b)=>a+b, 0);
-  const ingreso = t.ingreso;
+  const ingresoReal = t.ingreso;
+  const gastoTotal = t.gasto;
 
+  // Bloque 1: % vs ingreso PROYECTADO (tu meta mensual), no el registrado hasta ahora —
+  // evita que a inicios de mes, antes de que caiga el sueldo, se vea como "infinito".
   const fill = document.getElementById('termBarFill');
   const val = document.getElementById('termValue');
-  if(ingreso > 0 && pisoDuro > 0){
-    const pct = Math.min(100, Math.round(pisoDuro/ingreso*100));
-    fill.style.width = pct + '%';
-    val.textContent = pct + '% ($' + fmt(pisoDuro).replace('$','') + ' de ' + fmt(ingreso) + ')';
+  const subReal = document.getElementById('termSubReal');
+  if(pisoDuro > 0 && META_INGRESO_MENSUAL > 0){
+    const pctProyectado = Math.min(100, Math.round(pisoDuro/META_INGRESO_MENSUAL*100));
+    fill.style.width = pctProyectado + '%';
+    val.textContent = pctProyectado + '% ($' + fmt(pisoDuro).replace('$','') + ' de ' + fmt(META_INGRESO_MENSUAL) + ' proyectado)';
   } else {
     fill.style.width = '0%';
-    val.textContent = pisoDuro > 0 ? (fmt(pisoDuro) + ' comprometido (sin ingreso registrado este mes)') : 'Sin datos suficientes aún';
+    val.textContent = 'Sin líneas marcadas como Duro aún';
+  }
+  if(ingresoReal > 0){
+    const pctReal = Math.round(pisoDuro/ingresoReal*100);
+    subReal.textContent = 'Vs. ingreso real registrado este mes: ' + pctReal + '% (' + fmt(ingresoReal) + ')';
+  } else {
+    subReal.textContent = 'Aún no registras ingreso real este mes.';
   }
 
-  // Runway: ahorro acumulado en el año ÷ piso duro promedio mensual (aproximado, no es tu saldo real de Fintual)
+  // Bloque 2: Duro como % del gasto total del mes (no del ingreso) + promedio histórico
+  const fillG = document.getElementById('termBarFillGasto');
+  const valG = document.getElementById('termValueGasto');
+  const subHist = document.getElementById('termSubHistorico');
+  if(pisoDuro > 0 && gastoTotal > 0){
+    const pctGasto = Math.min(100, Math.round(pisoDuro/gastoTotal*100));
+    fillG.style.width = pctGasto + '%';
+    valG.textContent = pctGasto + '% ($' + fmt(pisoDuro).replace('$','') + ' de ' + fmt(gastoTotal) + ' gastado)';
+  } else {
+    fillG.style.width = '0%';
+    valG.textContent = 'Sin datos suficientes';
+  }
+  // Promedio histórico (proyección): % duro/ingreso proyectado, promediado entre los meses con marcas
+  let sumaPctHist = 0, mesesHist = 0;
+  for(let m=0; m<=mesIdx; m++){
+    const tm = totalesDeMes(anio, m);
+    const duroMes = Object.values(tm.totalesDuroCat).reduce((a,b)=>a+b,0);
+    if(duroMes > 0){ sumaPctHist += (duroMes/META_INGRESO_MENSUAL*100); mesesHist++; }
+  }
+  subHist.textContent = mesesHist > 0
+    ? ('Promedio histórico (' + mesesHist + ' mes(es) marcados): ' + Math.round(sumaPctHist/mesesHist) + '% de tu sueldo proyectado')
+    : 'Aún sin histórico suficiente para proyectar.';
+
+  // Bloque 3: Runway + meta del próximo mes completo
   let ahorroAcumulado = 0, mesesConDuro = 0, sumaDuroTotal = 0;
   for(let m=0; m<=mesIdx; m++){
     const tm = totalesDeMes(anio, m);
@@ -1224,14 +1266,20 @@ function renderTermometro(anio, mesIdx){
   }
   const runwayEl = document.getElementById('runwayValue');
   const runwaySub = document.getElementById('runwaySub');
+  const runwayMeta = document.getElementById('runwayMeta');
   if(mesesConDuro > 0 && ahorroAcumulado > 0){
     const pisoPromedio = sumaDuroTotal / mesesConDuro;
-    const meses = (ahorroAcumulado / pisoPromedio).toFixed(1);
-    runwayEl.textContent = meses + ' meses';
+    const mesesExactos = ahorroAcumulado / pisoPromedio;
+    runwayEl.textContent = mesesExactos.toFixed(1) + ' meses';
     runwaySub.textContent = 'Aproximado, según tus aportes registrados a Ahorro — no es tu saldo real de Fintual u otro.';
+
+    const proximoEntero = Math.floor(mesesExactos) + 1;
+    const faltante = (proximoEntero * pisoPromedio) - ahorroAcumulado;
+    runwayMeta.textContent = '🎯 Te faltan ' + fmt(faltante) + ' para llegar a ' + proximoEntero + ' meses de runway';
   } else {
     runwayEl.textContent = '—';
     runwaySub.textContent = 'Faltan datos (marca líneas como Duro y registra tus aportes a Ahorro).';
+    runwayMeta.textContent = '';
   }
 }
 
@@ -1263,14 +1311,16 @@ function renderHeatmap(anio, mesIdx){
     const monto = porDia[d] || 0;
     const intensidad = monto / max;
     let bg = 'var(--surface-2)';
-    if(intensidad > 0.66) bg = 'var(--blue)';
-    else if(intensidad > 0.33) bg = 'rgba(108,142,239,.65)';
-    else if(intensidad > 0) bg = 'rgba(108,142,239,.35)';
+    let colorTexto = 'var(--muted)';
+    if(intensidad > 0.66){ bg = 'var(--blue)'; colorTexto = '#0F1620'; }
+    else if(intensidad > 0.33){ bg = 'rgba(108,142,239,.65)'; colorTexto = '#0F1620'; }
+    else if(intensidad > 0){ bg = 'rgba(108,142,239,.35)'; colorTexto = 'var(--text)'; }
     const cell = document.createElement('div');
     cell.className = 'heat-cell' + (hoy.getDate()===d && hoy.getMonth()===mesIdx && hoy.getFullYear()===anio ? ' hoy' : '');
     cell.style.background = bg;
+    cell.style.color = colorTexto;
     cell.title = d + ': ' + fmt(monto);
-    cell.innerHTML = '<span class="heat-num">' + d + '</span>';
+    cell.innerHTML = '<span class="heat-num">' + d + '</span>' + (monto > 0 ? '<span class="heat-monto">' + fmtCorto(monto) + '</span>' : '');
     grid.appendChild(cell);
   }
 }
