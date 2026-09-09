@@ -56,6 +56,11 @@
     cursor:pointer; color:var(--text); flex-shrink:0;
   }
   .theme-toggle svg{width:17px; height:17px;}
+  .link-cruzado{
+    font-size:12px; color:var(--muted); text-decoration:none; padding:8px 12px;
+    border:1px solid var(--border); border-radius:20px; background:var(--surface-2); white-space:nowrap;
+  }
+  .link-cruzado:hover{color:var(--text); border-color:var(--blue);}
 
   /* 2 columnas en desktop, 1 en celular */
   .layout{display:grid; grid-template-columns:1fr; gap:0;}
@@ -261,6 +266,7 @@
     <div class="header-row">
       <h1>Gastos 2.0</h1>
       <div class="header-actions">
+        <a href="index.html" class="link-cruzado" title="Volver a la vista clásica">← Clásica</a>
         <select id="selectorMes"></select>
         <button class="theme-toggle" id="btnExportar" title="Exportar reporte del mes" aria-label="Exportar reporte">🖨️</button>
         <button class="theme-toggle" id="themeToggle" title="Cambiar tema" aria-label="Cambiar tema claro/oscuro"></button>
@@ -336,16 +342,15 @@
   </div>
 
   <section>
-    <div class="section-title">Calendario de calor <span class="n">(intensidad de gasto por día)</span></div>
+    <div class="section-title">Calendario de calor <span class="n">(🔒 Duro azul · 🎯 Flexible naranjo, intensidad = monto del día)</span></div>
     <div class="heatmap-card" id="heatmapCard">
       <div class="heatmap-grid" id="heatmapGrid"></div>
       <div class="heatmap-legend">
-        <span>Menos</span>
-        <span class="heat-swatch" style="background:var(--surface-2)"></span>
-        <span class="heat-swatch" style="background:rgba(108,142,239,.35)"></span>
-        <span class="heat-swatch" style="background:rgba(108,142,239,.65)"></span>
-        <span class="heat-swatch" style="background:var(--blue)"></span>
-        <span>Más</span>
+        <span class="heat-swatch" style="background:rgba(108,142,239,.9)"></span><span>Duro</span>
+        <span style="width:10px;"></span>
+        <span class="heat-swatch" style="background:rgba(242,149,77,.9)"></span><span>Flexible</span>
+        <span style="width:10px;"></span>
+        <span class="heat-swatch" style="background:var(--surface-2)"></span><span>Sin gasto</span>
       </div>
     </div>
   </section>
@@ -1288,12 +1293,19 @@ function renderHeatmap(anio, mesIdx){
   const grid = document.getElementById('heatmapGrid');
   grid.innerHTML = '';
   const t = totalesDeMes(anio, mesIdx);
-  const porDia = {};
+  const porDiaDuro = {}, porDiaFlex = {};
   t.delMes.filter(m => m['Tipo']==='Gasto').forEach(m => {
     const dia = m._fecha.getDate();
-    porDia[dia] = (porDia[dia]||0) + m._monto;
+    const esDuro = (m['Tipo_Fijo']||'').trim() === 'Duro';
+    if(esDuro) porDiaDuro[dia] = (porDiaDuro[dia]||0) + m._monto;
+    else porDiaFlex[dia] = (porDiaFlex[dia]||0) + m._monto;
   });
-  const max = Math.max(1, ...Object.values(porDia));
+  const totales = {};
+  for(let d=1; d<=31; d++){
+    const total = (porDiaDuro[d]||0) + (porDiaFlex[d]||0);
+    if(total > 0) totales[d] = total;
+  }
+  const max = Math.max(1, ...Object.values(totales));
   const diasEnMes = new Date(anio, mesIdx+1, 0).getDate();
   const primerDiaSemana = new Date(anio, mesIdx, 1).getDay(); // 0=domingo
   const offset = (primerDiaSemana + 6) % 7; // que la semana empiece el lunes
@@ -1308,18 +1320,27 @@ function renderHeatmap(anio, mesIdx){
 
   const hoy = new Date();
   for(let d=1; d<=diasEnMes; d++){
-    const monto = porDia[d] || 0;
+    const duro = porDiaDuro[d] || 0;
+    const flex = porDiaFlex[d] || 0;
+    const monto = duro + flex;
     const intensidad = monto / max;
     let bg = 'var(--surface-2)';
     let colorTexto = 'var(--muted)';
-    if(intensidad > 0.66){ bg = 'var(--blue)'; colorTexto = '#0F1620'; }
-    else if(intensidad > 0.33){ bg = 'rgba(108,142,239,.65)'; colorTexto = '#0F1620'; }
-    else if(intensidad > 0){ bg = 'rgba(108,142,239,.35)'; colorTexto = 'var(--text)'; }
+    if(monto > 0){
+      const pctDuro = Math.round(duro/monto*100);
+      const alpha = intensidad > 0.66 ? .9 : (intensidad > 0.33 ? .6 : .35);
+      const colorDuro = 'rgba(108,142,239,' + alpha + ')';   // azul = Duro
+      const colorFlex = 'rgba(242,149,77,' + alpha + ')';    // naranjo = Flexible
+      bg = pctDuro >= 100 ? colorDuro
+         : pctDuro <= 0 ? colorFlex
+         : 'linear-gradient(to right, ' + colorDuro + ' ' + pctDuro + '%, ' + colorFlex + ' ' + pctDuro + '% 100%)';
+      colorTexto = alpha > 0.6 ? '#0F1620' : 'var(--text)';
+    }
     const cell = document.createElement('div');
     cell.className = 'heat-cell' + (hoy.getDate()===d && hoy.getMonth()===mesIdx && hoy.getFullYear()===anio ? ' hoy' : '');
     cell.style.background = bg;
     cell.style.color = colorTexto;
-    cell.title = d + ': ' + fmt(monto);
+    cell.title = d + ': ' + fmt(monto) + (monto>0 ? ' (🔒 ' + fmt(duro) + ' Duro · 🎯 ' + fmt(flex) + ' Flexible)' : '');
     cell.innerHTML = '<span class="heat-num">' + d + '</span>' + (monto > 0 ? '<span class="heat-monto">' + fmtCorto(monto) + '</span>' : '');
     grid.appendChild(cell);
   }
