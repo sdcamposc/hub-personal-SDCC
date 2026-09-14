@@ -94,6 +94,11 @@
   .habito-cat{font-size:11.5px; color:var(--muted); margin-top:1px;}
   .racha{font-size:12px; color:var(--amber); font-weight:700; white-space:nowrap;}
   .racha.cero{color:var(--muted); font-weight:600;}
+  .archivar-btn{
+    background:none; border:none; color:var(--muted); font-size:12px; cursor:pointer;
+    padding:4px 2px; margin-left:4px; flex-shrink:0; white-space:nowrap;
+  }
+  .archivar-btn:hover{color:var(--red);}
 
   .dias-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-top:8px;}
   .dia-dot{aspect-ratio:1; border-radius:4px; background:var(--surface-2); border:1px solid var(--border);}
@@ -107,6 +112,19 @@
     background:var(--card); color:var(--text);
   }
   .settings-hint{font-size:11.5px; color:var(--muted); margin-top:6px;}
+
+  .add-btn{
+    font-size:14px; font-weight:600; padding:10px 14px; border-radius:8px; border:1px dashed var(--border);
+    background:var(--surface-2); color:var(--text-secondary); cursor:pointer; width:100%;
+  }
+  .add-btn.primario{background:var(--accent); color:#fff; border:none; flex:1;}
+  .add-btn.secundario{background:none; border:1px solid var(--border); color:var(--text-secondary); flex:1;}
+  #formAgregar label{font-size:12.5px; font-weight:600; color:var(--text-secondary); display:block; margin:10px 0 4px;}
+  #formAgregar input{
+    width:100%; font-size:14px; padding:9px 11px; border-radius:8px; border:1px solid var(--border);
+    background:var(--surface-2); color:var(--text);
+  }
+  .form-botones{display:flex; gap:8px; margin-top:14px;}
 
   .loading{text-align:center; color:var(--text-secondary); padding:40px 0;}
   .msg{font-size:12.5px; margin-top:10px; text-align:center;}
@@ -145,6 +163,22 @@
       </div>
 
       <div class="card" id="listaHabitos"></div>
+
+      <div class="card" id="formAgregar">
+        <div id="agregarCerrado">
+          <button class="add-btn" id="btnAbrirAgregar">+ Agregar hábito</button>
+        </div>
+        <div id="agregarAbierto" style="display:none;">
+          <label>Nombre del hábito</label>
+          <input type="text" id="nuevoNombre" placeholder="Ej: Leer 20 minutos">
+          <label>Categoría (opcional)</label>
+          <input type="text" id="nuevaCategoria" placeholder="Ej: Bienestar">
+          <div class="form-botones">
+            <button class="add-btn secundario" id="btnCancelarAgregar">Cancelar</button>
+            <button class="add-btn primario" id="btnGuardarAgregar">Guardar</button>
+          </div>
+        </div>
+      </div>
 
       <div id="mensajeGlobal" class="msg"></div>
     </div>
@@ -265,6 +299,7 @@ function render(){
         <div class="dias-grid">${diasHtml}</div>
       </div>
       <div class="racha ${racha === 0 ? 'cero' : ''}">${racha > 0 ? '🔥 ' + racha : '—'}</div>
+      <button class="archivar-btn" data-archivar="${nombre}" title="Archivar hábito">✕</button>
     `;
     lista.appendChild(row);
   });
@@ -276,6 +311,85 @@ function render(){
   document.querySelectorAll('.check').forEach(el => {
     el.addEventListener('click', () => toggleHabito(el));
   });
+  document.querySelectorAll('[data-archivar]').forEach(el => {
+    el.addEventListener('click', () => archivarHabito(el.dataset.archivar));
+  });
+}
+
+// ---------- Agregar hábito ----------
+const btnAbrirAgregar = document.getElementById('btnAbrirAgregar');
+const btnCancelarAgregar = document.getElementById('btnCancelarAgregar');
+const btnGuardarAgregar = document.getElementById('btnGuardarAgregar');
+const nuevoNombreInput = document.getElementById('nuevoNombre');
+const nuevaCategoriaInput = document.getElementById('nuevaCategoria');
+
+btnAbrirAgregar.addEventListener('click', () => {
+  document.getElementById('agregarCerrado').style.display = 'none';
+  document.getElementById('agregarAbierto').style.display = 'block';
+  nuevoNombreInput.focus();
+});
+btnCancelarAgregar.addEventListener('click', cerrarFormAgregar);
+
+function cerrarFormAgregar(){
+  document.getElementById('agregarAbierto').style.display = 'none';
+  document.getElementById('agregarCerrado').style.display = 'block';
+  nuevoNombreInput.value = '';
+  nuevaCategoriaInput.value = '';
+}
+
+btnGuardarAgregar.addEventListener('click', async () => {
+  const token = getToken();
+  const msg = document.getElementById('mensajeGlobal');
+  if(!token){ msg.textContent = 'Pega tu token arriba primero.'; msg.className = 'msg err'; return; }
+  const nombre = nuevoNombreInput.value.trim();
+  if(!nombre){ msg.textContent = 'Escribe un nombre para el hábito.'; msg.className = 'msg err'; return; }
+
+  btnGuardarAgregar.disabled = true;
+  try{
+    const params = new URLSearchParams({
+      token, hoja:'habito_config', accion:'agregar', nombre, categoria: nuevaCategoriaInput.value.trim()
+    });
+    const res = await fetch(WEBHOOK_URL + '?' + params.toString());
+    const json = await res.json();
+    btnGuardarAgregar.disabled = false;
+    if(json.ok){
+      cerrarFormAgregar();
+      msg.textContent = '✓ Hábito agregado';
+      msg.className = 'msg ok';
+      await cargarDatos();
+    } else {
+      msg.textContent = '⚠️ ' + (json.error || 'No se pudo guardar');
+      msg.className = 'msg err';
+    }
+  }catch(err){
+    btnGuardarAgregar.disabled = false;
+    msg.textContent = '⚠️ No se pudo conectar.';
+    msg.className = 'msg err';
+  }
+});
+
+async function archivarHabito(nombre){
+  const token = getToken();
+  const msg = document.getElementById('mensajeGlobal');
+  if(!token){ msg.textContent = 'Pega tu token arriba primero.'; msg.className = 'msg err'; return; }
+  if(!confirm(`¿Archivar "${nombre}"? No se borra su historial, solo deja de mostrarse.`)) return;
+
+  try{
+    const params = new URLSearchParams({ token, hoja:'habito_config', accion:'archivar', nombre });
+    const res = await fetch(WEBHOOK_URL + '?' + params.toString());
+    const json = await res.json();
+    if(json.ok){
+      msg.textContent = '✓ Hábito archivado';
+      msg.className = 'msg ok';
+      await cargarDatos();
+    } else {
+      msg.textContent = '⚠️ ' + (json.error || 'No se pudo archivar');
+      msg.className = 'msg err';
+    }
+  }catch(err){
+    msg.textContent = '⚠️ No se pudo conectar.';
+    msg.className = 'msg err';
+  }
 }
 
 async function toggleHabito(el){
