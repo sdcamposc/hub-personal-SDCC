@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="apple-touch-icon" href="../icono-hub-180.png">
+<meta name="apple-mobile-web-app-title" content="Hábitos">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Hábitos — Hub personal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script>
+  (function(){
+    var guardado = localStorage.getItem('tema-dashboard') || 'dark';
+    document.documentElement.setAttribute('data-theme', guardado);
+  })();
+</script>
+<style>
+  :root{
+    --bg:#0F1620;
+    --surface:#172230;
+    --surface-2:#1E2B3B;
+    --border:#2A3A4D;
+    --text:#EDEFF2;
+    --muted:#8A97A6;
+    --green:#4ADE94;
+    --amber:#F5B942;
+    --red:#F0654E;
+    --blue:#6C8EEF;
+    --teal:#2DD4BF;
+    --accent:var(--blue);
+    --card:var(--surface);
+    --text-secondary:var(--muted);
+  }
+  :root[data-theme="light"]{
+    --bg:#FAF7F2;
+    --surface:#FFFFFF;
+    --surface-2:#F1ECE3;
+    --border:#E4DDD0;
+    --text:#2B2621;
+    --muted:#8C8072;
+    --green:#1FA967;
+    --amber:#C98A1F;
+    --red:#D3392A;
+    --blue:#3F63D1;
+    --teal:#1F9E8C;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    padding-bottom:60px;
+    transition:background .2s ease, color .2s ease;
+  }
+  .mono{font-family:'JetBrains Mono',monospace;}
+  .theme-toggle{
+    width:38px; height:38px; border-radius:20px; border:1px solid var(--border);
+    background:var(--surface-2); display:flex; align-items:center; justify-content:center;
+    color:var(--text); cursor:pointer; flex-shrink:0;
+  }
+  .theme-toggle svg{width:17px;height:17px;}
+  header{
+    padding:20px 16px 12px; max-width:640px; margin:0 auto;
+    display:flex; justify-content:space-between; align-items:flex-start; gap:12px;
+  }
+  header a.back{color:var(--text-secondary); text-decoration:none; font-size:13px;}
+  header h1{font-size:22px; font-weight:700; margin-top:6px;}
+  main{max-width:640px; margin:0 auto; padding:0 16px 16px;}
+
+  .franja{
+    display:grid; grid-template-columns:1fr 1fr;
+    background:var(--surface); border:1px solid var(--border); border-radius:14px;
+    margin-bottom:18px; overflow:hidden;
+  }
+  .franja-item{padding:16px 18px; border-left:1px solid var(--border);}
+  .franja-item:first-child{border-left:none;}
+  .franja-label{font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin-bottom:6px;}
+  .franja-value{font-family:'JetBrains Mono',monospace; font-size:22px; font-weight:700;}
+
+  .card{background:var(--card); border:1px solid var(--border); border-radius:14px; padding:14px 16px; margin-bottom:12px;}
+
+  .habito-row{display:flex; align-items:center; gap:12px; padding:10px 0;}
+  .habito-row + .habito-row{border-top:1px solid var(--border);}
+  .check{
+    width:28px; height:28px; min-width:28px; border-radius:8px; border:2px solid var(--border);
+    background:var(--surface-2); cursor:pointer; display:flex; align-items:center; justify-content:center;
+    color:#fff; font-size:15px; transition:background .15s ease, border-color .15s ease; flex-shrink:0;
+  }
+  .check.hecho{background:var(--green); border-color:var(--green);}
+  .check.cargando{opacity:.5; pointer-events:none;}
+  .habito-info{flex:1; min-width:0;}
+  .habito-nombre{font-size:14.5px; font-weight:600;}
+  .habito-cat{font-size:11.5px; color:var(--muted); margin-top:1px;}
+  .racha{font-size:12px; color:var(--amber); font-weight:700; white-space:nowrap;}
+  .racha.cero{color:var(--muted); font-weight:600;}
+
+  .dias-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-top:8px;}
+  .dia-dot{aspect-ratio:1; border-radius:4px; background:var(--surface-2); border:1px solid var(--border);}
+  .dia-dot.hecho{background:var(--green); border-color:var(--green);}
+  .dias-labels{display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-top:6px; font-size:9.5px; color:var(--muted); text-align:center;}
+
+  .settings-card{background:var(--surface-2); border:1px dashed var(--border); border-radius:14px; padding:14px 16px; margin-bottom:16px; font-size:13px;}
+  .settings-card label{font-size:12.5px; font-weight:600; color:var(--text-secondary); display:block; margin-bottom:6px;}
+  .settings-card input{
+    width:100%; font-size:14px; padding:9px 11px; border-radius:8px; border:1px solid var(--border);
+    background:var(--card); color:var(--text);
+  }
+  .settings-hint{font-size:11.5px; color:var(--muted); margin-top:6px;}
+
+  .loading{text-align:center; color:var(--text-secondary); padding:40px 0;}
+  .msg{font-size:12.5px; margin-top:10px; text-align:center;}
+  .msg.err{color:var(--red);}
+  .msg.ok{color:var(--green);}
+</style>
+</head>
+<body>
+  <header>
+    <div>
+      <a class="back" href="../">← Hub</a>
+      <h1>Hábitos</h1>
+    </div>
+    <button class="theme-toggle" id="theme-toggle" aria-label="Cambiar tema"></button>
+  </header>
+
+  <main>
+    <div id="settingsCard" class="settings-card" style="display:none;">
+      <label>Token de escritura (se guarda solo en este navegador)</label>
+      <input type="text" id="tokenInput" placeholder="Pega tu token una vez">
+      <div class="settings-hint">Sin esto puedes ver tus hábitos pero no marcarlos.</div>
+    </div>
+
+    <div id="loading" class="loading">Cargando…</div>
+
+    <div id="contenido" style="display:none;">
+      <div class="franja">
+        <div class="franja-item">
+          <div class="franja-label">Hoy</div>
+          <div class="franja-value mono"><span id="hoyCumplidos">0</span>/<span id="hoyTotal">0</span></div>
+        </div>
+        <div class="franja-item">
+          <div class="franja-label">Mejor racha activa</div>
+          <div class="franja-value mono" id="mejorRacha">0</div>
+        </div>
+      </div>
+
+      <div class="card" id="listaHabitos"></div>
+
+      <div id="mensajeGlobal" class="msg"></div>
+    </div>
+  </main>
+
+<script>
+const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbx3lZ_F9YFewjjnvCPxvYYUzhghUbK5aeNX1yUhIyKA1JDZo6Jx7UjGVK0yW_pdUERm/exec';
+const TOKEN_KEY = 'sistemapersonal_webhook_token';
+const DIAS_GRID = 7;
+
+let DATA = { config: [], registros: [] };
+
+// ---------- Tema claro/oscuro ----------
+const ICONO_SOL = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="10" cy="10" r="3.4"/><path d="M10 2v2M10 16v2M18 10h-2M4 10H2M15.5 4.5l-1.4 1.4M5.9 14.1l-1.4 1.4M15.5 15.5l-1.4-1.4M5.9 5.9L4.5 4.5"/></svg>';
+const ICONO_LUNA = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M16.5 12.3A7 7 0 018 3.5a7 7 0 106.9 8.8 6.9 6.9 0 011.6 0z"/></svg>';
+function aplicarTema(tema){
+  document.documentElement.setAttribute('data-theme', tema);
+  document.getElementById('theme-toggle').innerHTML = tema === 'light' ? ICONO_LUNA : ICONO_SOL;
+  localStorage.setItem('tema-dashboard', tema);
+}
+aplicarTema(localStorage.getItem('tema-dashboard') || 'dark');
+document.getElementById('theme-toggle').addEventListener('click', () => {
+  const actual = document.documentElement.getAttribute('data-theme') || 'dark';
+  aplicarTema(actual === 'light' ? 'dark' : 'light');
+});
+
+// ---------- Token ----------
+const tokenInput = document.getElementById('tokenInput');
+function getToken(){ return localStorage.getItem(TOKEN_KEY) || ''; }
+function actualizarVisibilidadSettings(){
+  document.getElementById('settingsCard').style.display = getToken() ? 'none' : 'block';
+}
+tokenInput.value = getToken();
+tokenInput.addEventListener('change', () => {
+  localStorage.setItem(TOKEN_KEY, tokenInput.value.trim());
+  actualizarVisibilidadSettings();
+});
+actualizarVisibilidadSettings();
+
+// ---------- Fechas ----------
+function hoyISO(){
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function fechaISO(offsetDias){
+  const d = new Date();
+  d.setDate(d.getDate() + offsetDias);
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+const DIAS_SEMANA = ['D','L','M','M','J','V','S'];
+function labelDia(offsetDias){
+  const d = new Date();
+  d.setDate(d.getDate() + offsetDias);
+  return DIAS_SEMANA[d.getDay()];
+}
+
+// ---------- Carga de datos ----------
+async function cargarDatos(){
+  try{
+    const res = await fetch(WEBHOOK_URL + '?action=data');
+    const json = await res.json();
+    if(!json.ok) throw new Error(json.error || 'Respuesta no ok');
+    DATA.config = json.config || [];
+    DATA.registros = json.registros || [];
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('contenido').style.display = 'block';
+    render();
+  }catch(err){
+    document.getElementById('loading').textContent = 'No se pudo cargar: ' + err.message;
+  }
+}
+
+function estadoDe(habito, fecha){
+  const r = DATA.registros.find(x => x.Habito === habito && x.Fecha === fecha);
+  return r ? (r.Cumplido === true || r.Cumplido === 'TRUE') : false;
+}
+
+function calcularRacha(habito){
+  let racha = 0;
+  let offset = estadoDe(habito, hoyISO()) ? 0 : -1; // si hoy no está marcado, la racha cuenta desde ayer
+  if(offset === -1 && !estadoDe(habito, fechaISO(-1))) return 0;
+  while(estadoDe(habito, fechaISO(offset))){
+    racha++;
+    offset--;
+  }
+  return racha;
+}
+
+function render(){
+  const hoy = hoyISO();
+  const lista = document.getElementById('listaHabitos');
+  lista.innerHTML = '';
+
+  let cumplidosHoy = 0;
+  let mejorRacha = 0;
+
+  DATA.config.forEach(h => {
+    const nombre = h.Habito;
+    const hecho = estadoDe(nombre, hoy);
+    if(hecho) cumplidosHoy++;
+    const racha = calcularRacha(nombre);
+    if(racha > mejorRacha) mejorRacha = racha;
+
+    const row = document.createElement('div');
+    row.className = 'habito-row';
+
+    let diasHtml = '';
+    for(let i = -(DIAS_GRID-1); i <= 0; i++){
+      const fecha = fechaISO(i);
+      diasHtml += `<div class="dia-dot ${estadoDe(nombre, fecha) ? 'hecho' : ''}"></div>`;
+    }
+
+    row.innerHTML = `
+      <div class="check ${hecho ? 'hecho' : ''}" data-habito="${nombre}">${hecho ? '✓' : ''}</div>
+      <div class="habito-info">
+        <div class="habito-nombre">${nombre}</div>
+        <div class="habito-cat">${h.Categoria || ''}</div>
+        <div class="dias-grid">${diasHtml}</div>
+      </div>
+      <div class="racha ${racha === 0 ? 'cero' : ''}">${racha > 0 ? '🔥 ' + racha : '—'}</div>
+    `;
+    lista.appendChild(row);
+  });
+
+  document.getElementById('hoyCumplidos').textContent = cumplidosHoy;
+  document.getElementById('hoyTotal').textContent = DATA.config.length;
+  document.getElementById('mejorRacha').textContent = mejorRacha;
+
+  document.querySelectorAll('.check').forEach(el => {
+    el.addEventListener('click', () => toggleHabito(el));
+  });
+}
+
+async function toggleHabito(el){
+  const token = getToken();
+  const msg = document.getElementById('mensajeGlobal');
+  if(!token){
+    msg.textContent = 'Pega tu token arriba antes de marcar hábitos.';
+    msg.className = 'msg err';
+    return;
+  }
+  const nombre = el.dataset.habito;
+  const nuevoEstado = !el.classList.contains('hecho');
+  el.classList.add('cargando');
+
+  try{
+    const params = new URLSearchParams({
+      token, hoja:'habito', fecha: hoyISO(), habito: nombre, cumplido: String(nuevoEstado)
+    });
+    const res = await fetch(WEBHOOK_URL + '?' + params.toString());
+    const json = await res.json();
+    el.classList.remove('cargando');
+    if(json.ok){
+      // Actualiza el registro local sin recargar todo
+      const existente = DATA.registros.find(x => x.Habito === nombre && x.Fecha === hoyISO());
+      if(existente){ existente.Cumplido = nuevoEstado; }
+      else{ DATA.registros.push({ Fecha: hoyISO(), Habito: nombre, Cumplido: nuevoEstado, Notas:'' }); }
+      msg.textContent = '';
+      render();
+    } else {
+      msg.textContent = '⚠️ ' + (json.error || 'No se pudo guardar');
+      msg.className = 'msg err';
+    }
+  }catch(err){
+    el.classList.remove('cargando');
+    msg.textContent = '⚠️ No se pudo conectar.';
+    msg.className = 'msg err';
+  }
+}
+
+cargarDatos();
+</script>
+</body>
+</html>
