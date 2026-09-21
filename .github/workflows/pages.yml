@@ -1,0 +1,38 @@
+# Publica el hub en GitHub Pages cada vez que hay un cambio en la rama main.
+# También se puede lanzar a mano desde la pestaña Actions ("Run workflow").
+name: Publicar hub en Pages
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+# Permisos mínimos necesarios para publicar
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Una sola publicación a la vez; no cancela la que ya está en curso
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  publicar:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar el repositorio
+        uses: actions/checkout@v4
+      - name: Configurar Pages
+        uses: actions/configure-pages@v5
+      - name: Empaquetar el sitio
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: "."
+      - name: Publicar
+        id: deployment
+        uses: actions/deploy-pages@v4
