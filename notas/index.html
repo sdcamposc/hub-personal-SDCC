@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="apple-touch-icon" href="../icono-hub-180.png">
+<meta name="apple-mobile-web-app-title" content="Notas">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Notas — Hub personal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script>
+  (function(){
+    var guardado = localStorage.getItem('tema-dashboard') || 'dark';
+    document.documentElement.setAttribute('data-theme', guardado);
+  })();
+</script>
+<style>
+  :root{
+    --bg:#0F1620;
+    --surface:#172230;
+    --surface-2:#1E2B3B;
+    --border:#2A3A4D;
+    --text:#EDEFF2;
+    --muted:#8A97A6;
+    --green:#4ADE94;
+    --amber:#F5B942;
+    --red:#F0654E;
+    --blue:#6C8EEF;
+    --teal:#2DD4BF;
+    --purple:#B18CF5;
+    --accent:var(--blue);
+    --card:var(--surface);
+    --text-secondary:var(--muted);
+  }
+  :root[data-theme="light"]{
+    --bg:#FAF7F2;
+    --surface:#FFFFFF;
+    --surface-2:#F1ECE3;
+    --border:#E4DDD0;
+    --text:#2B2621;
+    --muted:#8C8072;
+    --green:#1FA967;
+    --amber:#C98A1F;
+    --red:#D3392A;
+    --blue:#3F63D1;
+    --teal:#1F9E8C;
+    --purple:#7C5CD1;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    padding-bottom:60px;
+    transition:background .2s ease, color .2s ease;
+  }
+  .mono{font-family:'JetBrains Mono',monospace;}
+  .theme-toggle{
+    width:38px; height:38px; border-radius:20px; border:1px solid var(--border);
+    background:var(--surface-2); display:flex; align-items:center; justify-content:center;
+    color:var(--text); cursor:pointer; flex-shrink:0;
+  }
+  .theme-toggle svg{width:17px;height:17px;}
+  header{
+    padding:20px 16px 12px; max-width:640px; margin:0 auto;
+    display:flex; justify-content:space-between; align-items:flex-start; gap:12px;
+  }
+  header a.back{color:var(--text-secondary); text-decoration:none; font-size:13px;}
+  header h1{font-size:22px; font-weight:700; margin-top:6px;}
+  main{max-width:640px; margin:0 auto; padding:0 16px 16px;}
+
+  .franja{
+    display:grid; grid-template-columns:1fr 1fr;
+    background:var(--surface); border:1px solid var(--border); border-radius:14px;
+    margin-bottom:16px; overflow:hidden;
+  }
+  .franja-item{padding:16px 18px; border-left:1px solid var(--border);}
+  .franja-item:first-child{border-left:none;}
+  .franja-label{font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin-bottom:6px;}
+  .franja-value{font-family:'JetBrains Mono',monospace; font-size:22px; font-weight:700;}
+
+  .filtros{display:flex; gap:6px; margin-bottom:14px; flex-wrap:wrap;}
+  .filtro-pill{
+    font-size:12.5px; font-weight:600; padding:7px 13px; border-radius:20px; border:1px solid var(--border);
+    background:var(--surface); color:var(--text-secondary); cursor:pointer;
+  }
+  .filtro-pill.activo{background:var(--accent); color:#fff; border-color:var(--accent);}
+
+  .card{background:var(--card); border:1px solid var(--border); border-radius:14px; padding:14px 16px; margin-bottom:12px;}
+
+  .nota-row{display:flex; align-items:flex-start; gap:10px; padding:12px 0;}
+  .nota-row + .nota-row{border-top:1px solid var(--border);}
+  .nota-info{flex:1; min-width:0;}
+  .nota-texto{font-size:14px; line-height:1.45; word-break:break-word; white-space:pre-wrap;}
+  .nota-meta{display:flex; gap:6px; margin-top:7px; align-items:center; flex-wrap:wrap;}
+  .badge{font-size:11px; font-weight:600; padding:2px 8px; border-radius:20px; background:var(--surface-2); color:var(--muted);}
+  .badge.tipo-idea{background:rgba(245,185,66,0.15); color:var(--amber);}
+  .badge.tipo-recordatorio{background:rgba(108,142,239,0.15); color:var(--blue);}
+  .badge.tipo-referencia{background:rgba(45,212,191,0.15); color:var(--teal);}
+  .badge.tipo-nota{background:rgba(177,140,245,0.15); color:var(--purple);}
+  .nota-fecha{font-size:11px; color:var(--muted);}
+  .eliminar-btn{
+    background:none; border:none; color:var(--muted); font-size:13px; cursor:pointer;
+    padding:4px 2px; margin-left:2px; flex-shrink:0; margin-top:1px;
+  }
+  .eliminar-btn:hover{color:var(--red);}
+
+  .add-btn{
+    font-size:14px; font-weight:600; padding:10px 14px; border-radius:8px; border:1px dashed var(--border);
+    background:var(--surface-2); color:var(--text-secondary); cursor:pointer; width:100%;
+  }
+  .add-btn.primario{background:var(--accent); color:#fff; border:none; flex:1;}
+  .add-btn.secundario{background:none; border:1px solid var(--border); color:var(--text-secondary); flex:1;}
+  #formAgregar label{font-size:12.5px; font-weight:600; color:var(--text-secondary); display:block; margin:10px 0 4px;}
+  #formAgregar textarea{
+    width:100%; font-size:14px; padding:9px 11px; border-radius:8px; border:1px solid var(--border);
+    background:var(--surface-2); color:var(--text); font-family:inherit; resize:vertical; min-height:70px;
+  }
+  .form-botones{display:flex; gap:8px; margin-top:14px;}
+  .clasificador-hint{font-size:11px; color:var(--muted); margin-top:6px;}
+
+  .settings-card{background:var(--surface-2); border:1px dashed var(--border); border-radius:14px; padding:14px 16px; margin-bottom:16px; font-size:13px;}
+  .settings-card label{font-size:12.5px; font-weight:600; color:var(--text-secondary); display:block; margin-bottom:6px;}
+  .settings-card input{
+    width:100%; font-size:14px; padding:9px 11px; border-radius:8px; border:1px solid var(--border);
+    background:var(--card); color:var(--text);
+  }
+  .settings-hint{font-size:11.5px; color:var(--muted); margin-top:6px;}
+
+  .vacio{text-align:center; color:var(--muted); padding:20px 0; font-size:13.5px;}
+  .loading{text-align:center; color:var(--text-secondary); padding:40px 0;}
+  .msg{font-size:12.5px; margin-top:10px; text-align:center;}
+  .msg.err{color:var(--red);}
+  .msg.ok{color:var(--green);}
+</style>
+</head>
+<body>
+  <header>
+    <div>
+      <a class="back" href="../">← Hub</a>
+      <h1>Notas</h1>
+    </div>
+    <button class="theme-toggle" id="theme-toggle" aria-label="Cambiar tema"></button>
+  </header>
+
+  <main>
+    <div id="settingsCard" class="settings-card" style="display:none;">
+      <label>Token de escritura (se guarda solo en este navegador)</label>
+      <input type="text" id="tokenInput" placeholder="Pega tu token una vez">
+      <div class="settings-hint">Sin esto puedes ver tus notas pero no crearlas ni eliminarlas.</div>
+    </div>
+
+    <div id="loading" class="loading">Cargando…</div>
+
+    <div id="contenido" style="display:none;">
+      <div class="franja">
+        <div class="franja-item">
+          <div class="franja-label">Total notas</div>
+          <div class="franja-value mono" id="totalNotas">0</div>
+        </div>
+        <div class="franja-item">
+          <div class="franja-label">Ideas</div>
+          <div class="franja-value mono" id="totalIdeas">0</div>
+        </div>
+      </div>
+
+      <div class="filtros" id="filtros"></div>
+
+      <div class="card" id="listaNotas"></div>
+
+      <div class="card" id="formAgregar">
+        <div id="agregarCerrado">
+          <button class="add-btn" id="btnAbrirAgregar">+ Agregar nota</button>
+        </div>
+        <div id="agregarAbierto" style="display:none;">
+          <label>Texto</label>
+          <textarea id="nuevoTexto" placeholder="Ej: idea: automatizar el resumen semanal"></textarea>
+          <div class="clasificador-hint">💡 Empieza con "idea", "recordar" o "ref"/"link" para que se clasifique así — si no, queda como Nota.</div>
+          <div class="form-botones">
+            <button class="add-btn secundario" id="btnCancelarAgregar">Cancelar</button>
+            <button class="add-btn primario" id="btnGuardarAgregar">Guardar</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="mensajeGlobal" class="msg"></div>
+    </div>
+  </main>
+
+<script>
+const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbx3lZ_F9YFewjjnvCPxvYYUzhghUbK5aeNX1yUhIyKA1JDZo6Jx7UjGVK0yW_pdUERm/exec';
+const TOKEN_KEY = 'sistemapersonal_webhook_token';
+const TIPOS = ['Todas', 'Idea', 'Recordatorio', 'Referencia', 'Nota'];
+
+let NOTAS = [];
+let FILTRO_ACTUAL = 'Todas';
+
+// ---------- Tema claro/oscuro ----------
+const ICONO_SOL = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="10" cy="10" r="3.4"/><path d="M10 2v2M10 16v2M18 10h-2M4 10H2M15.5 4.5l-1.4 1.4M5.9 14.1l-1.4 1.4M15.5 15.5l-1.4-1.4M5.9 5.9L4.5 4.5"/></svg>';
+const ICONO_LUNA = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M16.5 12.3A7 7 0 018 3.5a7 7 0 106.9 8.8 6.9 6.9 0 011.6 0z"/></svg>';
+function aplicarTema(tema){
+  document.documentElement.setAttribute('data-theme', tema);
+  document.getElementById('theme-toggle').innerHTML = tema === 'light' ? ICONO_LUNA : ICONO_SOL;
+  localStorage.setItem('tema-dashboard', tema);
+}
+aplicarTema(localStorage.getItem('tema-dashboard') || 'dark');
+document.getElementById('theme-toggle').addEventListener('click', () => {
+  const actual = document.documentElement.getAttribute('data-theme') || 'dark';
+  aplicarTema(actual === 'light' ? 'dark' : 'light');
+});
+
+// ---------- Token ----------
+const tokenInput = document.getElementById('tokenInput');
+function getToken(){ return localStorage.getItem(TOKEN_KEY) || ''; }
+function actualizarVisibilidadSettings(){
+  document.getElementById('settingsCard').style.display = getToken() ? 'none' : 'block';
+}
+tokenInput.value = getToken();
+tokenInput.addEventListener('change', () => {
+  localStorage.setItem(TOKEN_KEY, tokenInput.value.trim());
+  actualizarVisibilidadSettings();
+});
+actualizarVisibilidadSettings();
+
+// ---------- Filtros ----------
+const filtrosEl = document.getElementById('filtros');
+TIPOS.forEach(tipo => {
+  const pill = document.createElement('button');
+  pill.className = 'filtro-pill' + (tipo === FILTRO_ACTUAL ? ' activo' : '');
+  pill.textContent = tipo;
+  pill.dataset.tipo = tipo;
+  pill.addEventListener('click', () => {
+    FILTRO_ACTUAL = tipo;
+    document.querySelectorAll('.filtro-pill').forEach(p => p.classList.toggle('activo', p.dataset.tipo === tipo));
+    render();
+  });
+  filtrosEl.appendChild(pill);
+});
+
+// ---------- Carga de datos ----------
+async function cargarDatos(){
+  try{
+    const res = await fetch(WEBHOOK_URL + '?action=data');
+    const json = await res.json();
+    if(!json.ok) throw new Error(json.error || 'Respuesta no ok');
+    NOTAS = json.notas || [];
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('contenido').style.display = 'block';
+    render();
+  }catch(err){
+    document.getElementById('loading').textContent = 'No se pudo cargar: ' + err.message;
+  }
+}
+
+function claseTipo(tipo){
+  return 'tipo-' + (tipo || 'nota').toLowerCase();
+}
+
+function render(){
+  const lista = document.getElementById('listaNotas');
+  lista.innerHTML = '';
+
+  document.getElementById('totalNotas').textContent = NOTAS.length;
+  document.getElementById('totalIdeas').textContent = NOTAS.filter(n => n.Tipo === 'Idea').length;
+
+  const ordenadas = [...NOTAS]
+    .filter(n => FILTRO_ACTUAL === 'Todas' || n.Tipo === FILTRO_ACTUAL)
+    .sort((a, b) => (b.Fecha || '').localeCompare(a.Fecha || '') || (Number(b.Id) - Number(a.Id)));
+
+  if(ordenadas.length === 0){
+    lista.innerHTML = '<div class="vacio">No hay notas' + (FILTRO_ACTUAL !== 'Todas' ? ' de tipo ' + FILTRO_ACTUAL : '') + ' todavía.</div>';
+    return;
+  }
+
+  ordenadas.forEach(n => {
+    const row = document.createElement('div');
+    row.className = 'nota-row';
+    const origenIcono = n.Origen === 'Telegram' ? '📱' : '💻';
+    row.innerHTML = `
+      <div class="nota-info">
+        <div class="nota-texto">${n.Texto}</div>
+        <div class="nota-meta">
+          <span class="badge ${claseTipo(n.Tipo)}">${n.Tipo || 'Nota'}</span>
+          <span class="nota-fecha">${origenIcono} ${n.Fecha || ''}</span>
+        </div>
+      </div>
+      <button class="eliminar-btn" data-eliminar="${n.Id}" title="Eliminar nota">✕</button>
+    `;
+    lista.appendChild(row);
+  });
+
+  document.querySelectorAll('[data-eliminar]').forEach(el => {
+    el.addEventListener('click', () => eliminarNotaUI(el.dataset.eliminar));
+  });
+}
+
+async function eliminarNotaUI(id){
+  const token = getToken();
+  const msg = document.getElementById('mensajeGlobal');
+  if(!token){ msg.textContent = 'Pega tu token arriba antes de eliminar.'; msg.className = 'msg err'; return; }
+  if(!confirm('¿Eliminar esta nota?')) return;
+
+  try{
+    const params = new URLSearchParams({ token, hoja:'nota', accion:'eliminar', id });
+    const res = await fetch(WEBHOOK_URL + '?' + params.toString());
+    const json = await res.json();
+    if(json.ok){
+      NOTAS = NOTAS.filter(n => String(n.Id) !== String(id));
+      msg.textContent = '✓ Nota eliminada';
+      msg.className = 'msg ok';
+      render();
+    } else {
+      msg.textContent = '⚠️ ' + (json.error || 'No se pudo eliminar');
+      msg.className = 'msg err';
+    }
+  }catch(err){
+    msg.textContent = '⚠️ No se pudo conectar.';
+    msg.className = 'msg err';
+  }
+}
+
+// ---------- Agregar nota ----------
+const btnAbrirAgregar = document.getElementById('btnAbrirAgregar');
+const btnCancelarAgregar = document.getElementById('btnCancelarAgregar');
+const btnGuardarAgregar = document.getElementById('btnGuardarAgregar');
+const nuevoTextoInput = document.getElementById('nuevoTexto');
+
+btnAbrirAgregar.addEventListener('click', () => {
+  document.getElementById('agregarCerrado').style.display = 'none';
+  document.getElementById('agregarAbierto').style.display = 'block';
+  nuevoTextoInput.focus();
+});
+btnCancelarAgregar.addEventListener('click', cerrarFormAgregar);
+
+function cerrarFormAgregar(){
+  document.getElementById('agregarAbierto').style.display = 'none';
+  document.getElementById('agregarCerrado').style.display = 'block';
+  nuevoTextoInput.value = '';
+}
+
+btnGuardarAgregar.addEventListener('click', async () => {
+  const token = getToken();
+  const msg = document.getElementById('mensajeGlobal');
+  if(!token){ msg.textContent = 'Pega tu token arriba primero.'; msg.className = 'msg err'; return; }
+  const texto = nuevoTextoInput.value.trim();
+  if(!texto){ msg.textContent = 'Escribe el texto de la nota.'; msg.className = 'msg err'; return; }
+
+  btnGuardarAgregar.disabled = true;
+  try{
+    const params = new URLSearchParams({ token, hoja:'nota', accion:'crear', texto, origen:'Web' });
+    const res = await fetch(WEBHOOK_URL + '?' + params.toString());
+    const json = await res.json();
+    btnGuardarAgregar.disabled = false;
+    if(json.ok){
+      cerrarFormAgregar();
+      msg.textContent = '✓ Nota guardada como ' + json.tipo;
+      msg.className = 'msg ok';
+      await cargarDatos();
+    } else {
+      msg.textContent = '⚠️ ' + (json.error || 'No se pudo guardar');
+      msg.className = 'msg err';
+    }
+  }catch(err){
+    btnGuardarAgregar.disabled = false;
+    msg.textContent = '⚠️ No se pudo conectar.';
+    msg.className = 'msg err';
+  }
+});
+
+cargarDatos();
+</script>
+</body>
+</html>
