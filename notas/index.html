@@ -8,8 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>Notas — Hub personal</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../hub.css">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <script>
   (function(){
     var guardado = localStorage.getItem('tema-dashboard') || 'dark';
@@ -50,14 +49,13 @@
   }
   *{box-sizing:border-box;margin:0;padding:0;}
   body{
-    font-family:var(--fuente-cuerpo),-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
     background:var(--bg);
     color:var(--text);
     padding-bottom:60px;
     transition:background .2s ease, color .2s ease;
   }
-  h1,h2,h3{font-family:var(--fuente-titulo);}
-  .mono{font-family:var(--fuente-numeros),monospace;}
+  .mono{font-family:'JetBrains Mono',monospace;}
   .theme-toggle{
     width:38px; height:38px; border-radius:20px; border:1px solid var(--border);
     background:var(--surface-2); display:flex; align-items:center; justify-content:center;
@@ -80,7 +78,7 @@
   .franja-item{padding:16px 18px; border-left:1px solid var(--border);}
   .franja-item:first-child{border-left:none;}
   .franja-label{font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin-bottom:6px;}
-  .franja-value{font-family:var(--fuente-numeros),monospace; font-size:22px; font-weight:700;}
+  .franja-value{font-family:'JetBrains Mono',monospace; font-size:22px; font-weight:700;}
 
   .filtros{display:flex; gap:6px; margin-bottom:14px; flex-wrap:wrap;}
   .filtro-pill{
@@ -107,6 +105,17 @@
     padding:4px 2px; margin-left:2px; flex-shrink:0; margin-top:1px;
   }
   .eliminar-btn:hover{color:var(--red);}
+  .archivar-btn{
+    background:none; border:none; color:var(--muted); font-size:13px; cursor:pointer;
+    padding:4px 2px; margin-left:2px; flex-shrink:0; margin-top:1px;
+  }
+  .archivar-btn:hover{color:var(--accent);}
+  .nota-acciones{display:flex; align-items:flex-start; gap:2px; flex-shrink:0;}
+  .select-tipo{
+    background:var(--surface-2); border:1px solid var(--border); border-radius:6px;
+    color:var(--text); padding:4px 6px; font-size:11px; margin-top:2px;
+  }
+  .nota-row.archivada{opacity:.6;}
 
   .add-btn{
     font-size:14px; font-weight:600; padding:10px 14px; border-radius:8px; border:1px dashed var(--border);
@@ -168,6 +177,9 @@
       </div>
 
       <div class="filtros" id="filtros"></div>
+      <div class="filtros">
+        <button class="filtro-pill" id="btnToggleArchivadas">📦 Ver archivadas</button>
+      </div>
 
       <div class="card" id="listaNotas"></div>
 
@@ -178,7 +190,7 @@
         <div id="agregarAbierto" style="display:none;">
           <label>Texto</label>
           <textarea id="nuevoTexto" placeholder="Ej: idea: automatizar el resumen semanal"></textarea>
-          <div class="clasificador-hint">💡 Empieza con "idea", "recordar" o "ref"/"link" para que se clasifique así — si no, queda como Nota.</div>
+          <div class="clasificador-hint">💡 Si el texto contiene "idea", "recordar" o "ref"/"link"/"http" en cualquier parte, se clasifica así — si no, queda como Nota. Siempre puedes cambiarla después con el selector de cada nota.</div>
           <div class="form-botones">
             <button class="add-btn secundario" id="btnCancelarAgregar">Cancelar</button>
             <button class="add-btn primario" id="btnGuardarAgregar">Guardar</button>
@@ -197,6 +209,13 @@ const TIPOS = ['Todas', 'Idea', 'Recordatorio', 'Referencia', 'Nota'];
 
 let NOTAS = [];
 let FILTRO_ACTUAL = 'Todas';
+let MOSTRAR_ARCHIVADAS = false;
+
+// El valor de una casilla booleana en Sheets puede volver como true/false o
+// como el texto 'TRUE'/'FALSE' — esto normaliza ambos casos.
+function esArchivada(n){
+  return n.Archivada === true || n.Archivada === 'TRUE';
+}
 
 // Escapa texto antes de insertarlo como HTML: el texto de una nota es contenido
 // libre escrito por ti (o por el bot), así que nunca debe poder ejecutar código.
@@ -249,6 +268,13 @@ TIPOS.forEach(tipo => {
   filtrosEl.appendChild(pill);
 });
 
+document.getElementById('btnToggleArchivadas').addEventListener('click', function(){
+  MOSTRAR_ARCHIVADAS = !MOSTRAR_ARCHIVADAS;
+  this.classList.toggle('activo', MOSTRAR_ARCHIVADAS);
+  this.textContent = MOSTRAR_ARCHIVADAS ? '📋 Ver activas' : '📦 Ver archivadas';
+  render();
+});
+
 // ---------- Carga de datos ----------
 async function cargarDatos(){
   const token = getToken();
@@ -279,31 +305,40 @@ function render(){
   const lista = document.getElementById('listaNotas');
   lista.innerHTML = '';
 
-  document.getElementById('totalNotas').textContent = NOTAS.length;
-  document.getElementById('totalIdeas').textContent = NOTAS.filter(n => n.Tipo === 'Idea').length;
+  const activas = NOTAS.filter(n => !esArchivada(n));
+  document.getElementById('totalNotas').textContent = activas.length;
+  document.getElementById('totalIdeas').textContent = activas.filter(n => n.Tipo === 'Idea').length;
 
   const ordenadas = [...NOTAS]
+    .filter(n => MOSTRAR_ARCHIVADAS ? esArchivada(n) : !esArchivada(n))
     .filter(n => FILTRO_ACTUAL === 'Todas' || n.Tipo === FILTRO_ACTUAL)
     .sort((a, b) => (b.Fecha || '').localeCompare(a.Fecha || '') || (Number(b.Id) - Number(a.Id)));
 
   if(ordenadas.length === 0){
-    lista.innerHTML = '<div class="vacio">No hay notas' + (FILTRO_ACTUAL !== 'Todas' ? ' de tipo ' + esc(FILTRO_ACTUAL) : '') + ' todavía.</div>';
+    const tipoTxt = FILTRO_ACTUAL !== 'Todas' ? ' de tipo ' + esc(FILTRO_ACTUAL) : '';
+    lista.innerHTML = '<div class="vacio">' + (MOSTRAR_ARCHIVADAS ? 'No hay notas archivadas' + tipoTxt + '.' : 'No hay notas' + tipoTxt + ' todavía.') + '</div>';
     return;
   }
 
   ordenadas.forEach(n => {
     const row = document.createElement('div');
-    row.className = 'nota-row';
+    row.className = 'nota-row' + (esArchivada(n) ? ' archivada' : '');
     const origenIcono = n.Origen === 'Telegram' ? '📱' : '💻';
+    const opciones = ['Idea','Recordatorio','Referencia','Nota'].map(t =>
+      `<option value="${t}" ${n.Tipo === t ? 'selected' : ''}>${t}</option>`
+    ).join('');
     row.innerHTML = `
       <div class="nota-info">
         <div class="nota-texto">${esc(n.Texto)}</div>
         <div class="nota-meta">
-          <span class="badge ${claseTipo(n.Tipo)}">${esc(n.Tipo || 'Nota')}</span>
+          <select class="select-tipo" data-reclasificar="${esc(n.Id)}">${opciones}</select>
           <span class="nota-fecha">${origenIcono} ${esc(n.Fecha || '')}</span>
         </div>
       </div>
-      <button class="eliminar-btn" data-eliminar="${esc(n.Id)}" title="Eliminar nota">✕</button>
+      <div class="nota-acciones">
+        <button class="archivar-btn" data-archivar="${esc(n.Id)}" data-archivada="${esArchivada(n) ? 'false' : 'true'}" title="${esArchivada(n) ? 'Desarchivar' : 'Archivar'}">${esArchivada(n) ? '📤' : '📦'}</button>
+        <button class="eliminar-btn" data-eliminar="${esc(n.Id)}" title="Eliminar nota (permanente)">✕</button>
+      </div>
     `;
     lista.appendChild(row);
   });
@@ -311,6 +346,64 @@ function render(){
   document.querySelectorAll('[data-eliminar]').forEach(el => {
     el.addEventListener('click', () => eliminarNotaUI(el.dataset.eliminar));
   });
+  document.querySelectorAll('[data-archivar]').forEach(el => {
+    el.addEventListener('click', () => archivarNotaUI(el.dataset.archivar, el.dataset.archivada === 'true'));
+  });
+  document.querySelectorAll('[data-reclasificar]').forEach(el => {
+    el.addEventListener('change', () => reclasificarNotaUI(el.dataset.reclasificar, el.value));
+  });
+}
+
+async function archivarNotaUI(id, archivada){
+  const token = getToken();
+  const msg = document.getElementById('mensajeGlobal');
+  if(!token){ msg.textContent = 'Pega tu token arriba antes de archivar.'; msg.className = 'msg err'; return; }
+
+  try{
+    const params = new URLSearchParams({ token, hoja:'nota', accion:'archivar', id, archivada: String(archivada) });
+    const res = await fetch(WEBHOOK_URL + '?' + params.toString());
+    const json = await res.json();
+    if(json.ok){
+      const nota = NOTAS.find(n => String(n.Id) === String(id));
+      if(nota) nota.Archivada = archivada;
+      msg.textContent = archivada ? '✓ Nota archivada' : '✓ Nota desarchivada';
+      msg.className = 'msg ok';
+      render();
+    } else {
+      msg.textContent = '⚠️ ' + (json.error || 'No se pudo archivar');
+      msg.className = 'msg err';
+    }
+  }catch(err){
+    msg.textContent = '⚠️ No se pudo conectar.';
+    msg.className = 'msg err';
+  }
+}
+
+async function reclasificarNotaUI(id, tipo){
+  const token = getToken();
+  const msg = document.getElementById('mensajeGlobal');
+  if(!token){ msg.textContent = 'Pega tu token arriba antes de reclasificar.'; msg.className = 'msg err'; render(); return; }
+
+  try{
+    const params = new URLSearchParams({ token, hoja:'nota', accion:'reclasificar', id, tipo });
+    const res = await fetch(WEBHOOK_URL + '?' + params.toString());
+    const json = await res.json();
+    if(json.ok){
+      const nota = NOTAS.find(n => String(n.Id) === String(id));
+      if(nota) nota.Tipo = tipo;
+      msg.textContent = '✓ Reclasificada como ' + tipo;
+      msg.className = 'msg ok';
+      render();
+    } else {
+      msg.textContent = '⚠️ ' + (json.error || 'No se pudo reclasificar');
+      msg.className = 'msg err';
+      render();
+    }
+  }catch(err){
+    msg.textContent = '⚠️ No se pudo conectar.';
+    msg.className = 'msg err';
+    render();
+  }
 }
 
 async function eliminarNotaUI(id){
