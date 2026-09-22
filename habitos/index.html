@@ -143,9 +143,9 @@
 
   <main>
     <div id="settingsCard" class="settings-card" style="display:none;">
-      <label>Token de escritura (se guarda solo en este navegador)</label>
+      <label>Token (se guarda solo en este navegador)</label>
       <input type="text" id="tokenInput" placeholder="Pega tu token una vez">
-      <div class="settings-hint">Sin esto puedes ver tus hábitos pero no marcarlos.</div>
+      <div class="settings-hint">Sin esto no puedes ver ni marcar tus hábitos: la lectura también requiere token.</div>
     </div>
 
     <div id="loading" class="loading">Cargando…</div>
@@ -191,6 +191,14 @@ const DIAS_GRID = 7;
 
 let DATA = { config: [], registros: [] };
 
+// Escapa texto antes de insertarlo como HTML: el nombre/categoría de un hábito
+// es texto libre que tú escribes, así que nunca debe poder ejecutar código.
+function esc(s){
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
 // ---------- Tema claro/oscuro ----------
 const ICONO_SOL = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="10" cy="10" r="3.4"/><path d="M10 2v2M10 16v2M18 10h-2M4 10H2M15.5 4.5l-1.4 1.4M5.9 14.1l-1.4 1.4M15.5 15.5l-1.4-1.4M5.9 5.9L4.5 4.5"/></svg>';
 const ICONO_LUNA = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M16.5 12.3A7 7 0 018 3.5a7 7 0 106.9 8.8 6.9 6.9 0 011.6 0z"/></svg>';
@@ -215,6 +223,7 @@ tokenInput.value = getToken();
 tokenInput.addEventListener('change', () => {
   localStorage.setItem(TOKEN_KEY, tokenInput.value.trim());
   actualizarVisibilidadSettings();
+  cargarDatos(); // ahora que hay token, intenta cargar
 });
 actualizarVisibilidadSettings();
 
@@ -237,8 +246,14 @@ function labelDia(offsetDias){
 
 // ---------- Carga de datos ----------
 async function cargarDatos(){
+  const token = getToken();
+  if(!token){
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('loading').textContent = 'Pega tu token arriba para ver tus hábitos.';
+    return;
+  }
   try{
-    const res = await fetch(WEBHOOK_URL + '?action=data');
+    const res = await fetch(WEBHOOK_URL + '?action=data&token=' + encodeURIComponent(token));
     const json = await res.json();
     if(!json.ok) throw new Error(json.error || 'Respuesta no ok');
     DATA.config = json.config || [];
@@ -247,6 +262,7 @@ async function cargarDatos(){
     document.getElementById('contenido').style.display = 'block';
     render();
   }catch(err){
+    document.getElementById('loading').style.display = 'block';
     document.getElementById('loading').textContent = 'No se pudo cargar: ' + err.message;
   }
 }
@@ -292,14 +308,14 @@ function render(){
     }
 
     row.innerHTML = `
-      <div class="check ${hecho ? 'hecho' : ''}" data-habito="${nombre}">${hecho ? '✓' : ''}</div>
+      <div class="check ${hecho ? 'hecho' : ''}" data-habito="${esc(nombre)}">${hecho ? '✓' : ''}</div>
       <div class="habito-info">
-        <div class="habito-nombre">${nombre}</div>
-        <div class="habito-cat">${h.Categoria || ''}</div>
+        <div class="habito-nombre">${esc(nombre)}</div>
+        <div class="habito-cat">${esc(h.Categoria || '')}</div>
         <div class="dias-grid">${diasHtml}</div>
       </div>
       <div class="racha ${racha === 0 ? 'cero' : ''}">${racha > 0 ? '🔥 ' + racha : '—'}</div>
-      <button class="archivar-btn" data-archivar="${nombre}" title="Archivar hábito">✕</button>
+      <button class="archivar-btn" data-archivar="${esc(nombre)}" title="Archivar hábito">✕</button>
     `;
     lista.appendChild(row);
   });
