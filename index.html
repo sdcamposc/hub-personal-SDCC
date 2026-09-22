@@ -8,7 +8,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>Hub personal — Sebastián</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="hub.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <script>
   (function(){
     var guardado = localStorage.getItem('tema-dashboard') || 'dark';
@@ -16,122 +18,66 @@
   })();
 </script>
 <style>
-  :root{
-    --bg:#0F1620;
-    --surface:#172230;
-    --surface-2:#1E2B3B;
-    --border:#2A3A4D;
-    --text:#EDEFF2;
-    --muted:#8A97A6;
-    --green:#4ADE94;
-    --blue:#6C8EEF;
-    --teal:#2DD4BF;
-    /* alias hacia los nombres ya usados en este archivo */
-    --accent:var(--blue);
-    --card:var(--surface);
-    --text-secondary:var(--muted);
-  }
-  :root[data-theme="light"]{
-    --bg:#FAF7F2;
-    --surface:#FFFFFF;
-    --surface-2:#F1ECE3;
-    --border:#E4DDD0;
-    --text:#2B2621;
-    --muted:#8C8072;
-    --green:#1FA967;
-    --blue:#3F63D1;
-    --teal:#1F9E8C;
-  }
-  *{box-sizing:border-box;margin:0;padding:0;}
+  /* Estilos propios de esta página — el resto (tarjeta, btn, badge, barra,
+     tipografía, colores) ya viene de hub.css */
   body{
-    font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    background:var(--bg);
-    color:var(--text);
-    min-height:100vh;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    padding:32px 20px 48px;
+    max-width:100%; padding:24px 16px 60px;
+    margin:0; background:var(--bg); color:var(--text);
     transition:background .2s ease, color .2s ease;
   }
-  .theme-toggle{
-    position:fixed;
-    top:16px;
-    right:16px;
-    width:38px;
-    height:38px;
-    border-radius:20px;
-    border:1px solid var(--border);
-    background:var(--surface-2);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    color:var(--text);
-    cursor:pointer;
-    z-index:10;
-  }
-  .theme-toggle svg{width:17px;height:17px;}
-  header{
-    text-align:center;
-    margin-bottom:32px;
-    max-width:560px;
-  }
-  header h1{
-    font-size:26px;
-    font-weight:700;
-    letter-spacing:-0.02em;
-  }
-  header p{
-    color:var(--text-secondary);
-    font-size:15px;
-    margin-top:6px;
+  .wrap{ max-width:900px; margin:0 auto; }
+  .theme-toggle{ position:fixed; top:16px; right:16px; z-index:10; }
+
+  header.hub-header{ text-align:center; margin-bottom:28px; }
+  header.hub-header h1{ font-size:26px; font-weight:700; }
+  header.hub-header p{ color:var(--muted); font-size:15px; margin-top:6px; }
+
+  .seccion-label{
+    font-size:12.5px; color:var(--muted); text-transform:uppercase;
+    letter-spacing:.06em; margin:28px 0 12px; font-weight:600;
   }
 
-  /* ---- Grilla de accesos (tiles horizontales, no lista vertical) ---- */
+  /* ---- Bento "Hoy" ---- */
+  .bento{
+    display:grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap:12px;
+  }
+  @media(min-width:640px){
+    .bento{ grid-template-columns: repeat(4, 1fr); }
+    .bento .span2{ grid-column: span 2; }
+  }
+  .bento-tarjeta{ display:flex; flex-direction:column; gap:8px; min-height:118px; }
+  .bento-titulo{ font-size:12px; color:var(--muted); display:flex; align-items:center; gap:6px; }
+  .bento-cifra{ font-size:24px; font-weight:700; font-family:var(--fuente-numeros); font-variant-numeric:tabular-nums; }
+  .bento-sub{ font-size:11.5px; color:var(--muted); margin-top:-2px; }
+  .bento-tarjeta.bloqueada{ opacity:.75; }
+  .bento-tarjeta a.bento-link{ text-decoration:none; color:inherit; display:flex; flex-direction:column; gap:8px; height:100%; }
+
+  .conectar{ margin-top:6px; }
+  .conectar input{ font-size:12.5px; padding:7px 9px; margin-bottom:6px; }
+  .conectar .btn{ font-size:12px; padding:6px 10px; width:auto; }
+
+  /* ---- Grilla de accesos (igual que antes) ---- */
   .grid{
     width:100%;
-    max-width:760px;
     display:grid;
     grid-template-columns:repeat(2, 1fr);
     gap:14px;
   }
-  @media(min-width:560px){
-    .grid{ grid-template-columns:repeat(3, 1fr); }
-  }
-  @media(min-width:860px){
-    .grid{ gap:16px; }
-  }
+  @media(min-width:560px){ .grid{ grid-template-columns:repeat(3, 1fr); } }
 
   a.card{
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    text-align:center;
-    gap:10px;
-    background:var(--card);
-    border:1px solid var(--border);
-    border-radius:18px;
-    padding:22px 14px 18px;
-    text-decoration:none;
-    color:var(--text);
-    box-shadow:0 1px 2px rgba(0,0,0,0.04);
-    transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease;
-    position:relative;
+    display:flex; flex-direction:column; align-items:center; text-align:center; gap:10px;
+    background:var(--surface); border:1px solid var(--border); border-radius:18px;
+    padding:22px 14px 18px; text-decoration:none; color:var(--text);
+    box-shadow:var(--sombra); transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease;
   }
-  a.card:active{transform:scale(0.97);}
-  a.card:hover{
-    box-shadow:0 6px 18px rgba(0,0,0,0.10);
-    border-color:var(--accent);
-    transform:translateY(-2px);
-  }
+  a.card:active{ transform:scale(0.97); }
+  a.card:hover{ box-shadow:0 6px 18px rgba(0,0,0,0.10); border-color:var(--acento); transform:translateY(-2px); }
   .icon{
-    font-size:26px;
-    width:52px;
-    height:52px;
-    border-radius:14px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
+    font-size:26px; width:52px; height:52px; border-radius:14px;
+    display:flex; align-items:center; justify-content:center;
   }
   .icon.gastos{background:rgba(62,111,217,0.10);}
   .icon.running{background:rgba(20,184,166,0.10);}
@@ -140,119 +86,286 @@
   .icon.tareas{background:rgba(108,142,239,0.10);}
   .icon.notas{background:rgba(177,140,245,0.10);}
   .icon.inversiones{background:rgba(74,222,148,0.10);}
-  .card-body h2{
-    font-size:14.5px;
-    font-weight:600;
-    line-height:1.25;
-  }
-  .card-body p{
-    font-size:11.5px;
-    color:var(--text-secondary);
-    margin-top:4px;
-    line-height:1.35;
-  }
+  .card-body h2{ font-size:14.5px; font-weight:600; line-height:1.25; }
+  .card-body p{ font-size:11.5px; color:var(--muted); margin-top:4px; line-height:1.35; }
   .badge-beta,.badge-privado{
-    display:inline-block;
-    font-size:9.5px;
-    font-weight:700;
-    padding:2px 7px;
-    border-radius:20px;
-    margin-top:2px;
-    vertical-align:middle;
+    display:inline-block; font-size:9.5px; font-weight:700; padding:2px 7px;
+    border-radius:20px; margin-top:2px; vertical-align:middle;
   }
-  .badge-beta{color:var(--green); background:rgba(74,222,148,0.14);}
-  .badge-privado{color:var(--text-secondary); background:var(--surface-2); border:1px solid var(--border);}
+  .badge-beta{ color:var(--ok); background:var(--ok-suave); }
+  .badge-privado{ color:var(--muted); background:var(--surface-2); border:1px solid var(--border); }
 
-  footer{
-    margin-top:40px;
-    font-size:12px;
-    color:var(--text-secondary);
-    text-align:center;
-  }
+  footer{ margin-top:40px; font-size:12px; color:var(--muted); text-align:center; }
 </style>
 </head>
 <body>
-  <button class="theme-toggle" id="theme-toggle" aria-label="Cambiar tema"></button>
+  <button class="btn-icono theme-toggle" id="theme-toggle" aria-label="Cambiar tema"></button>
 
-  <header>
-    <h1>Hub personal</h1>
-    <p>Un solo link para ver y registrar todo — desde el computador o el celular.</p>
-  </header>
+  <div class="wrap">
+    <header class="hub-header">
+      <h1>Hub personal</h1>
+      <p>Un solo link para ver y registrar todo — desde el computador o el celular.</p>
+    </header>
 
-  <div class="grid">
-    <a class="card" href="gastos/">
-      <div class="icon gastos">💰</div>
-      <div class="card-body">
-        <h2>Gastos</h2>
-        <p>Control financiero, categorías y conciliación</p>
+    <div class="seccion-label">Hoy</div>
+    <div class="bento">
+
+      <!-- HÁBITOS -->
+      <div class="tarjeta bento-tarjeta">
+        <a class="bento-link" href="habitos/">
+          <div class="bento-titulo">🔁 Hábitos</div>
+          <div class="bento-cifra" id="habitosCifra">—</div>
+          <div class="bento-sub" id="habitosSub">Cargando…</div>
+          <div class="barra"><div class="barra-fill" id="habitosBarra" style="width:0%"></div></div>
+        </a>
+        <div class="conectar" id="habitosConectar" style="display:none;">
+          <input type="text" id="habitosTokenInput" placeholder="Pega tu token">
+          <button class="btn" id="habitosTokenBtn">Conectar</button>
+        </div>
       </div>
-    </a>
 
-    <a class="card" href="gastos/gastos2.html">
-      <div class="icon gastos2">✨</div>
-      <div class="card-body">
-        <h2>Gastos 2.0 <span class="badge-beta">BETA</span></h2>
-        <p>Zona Dura/Flexible, termómetro, heatmap y runway</p>
+      <!-- TAREAS -->
+      <div class="tarjeta bento-tarjeta">
+        <a class="bento-link" href="tareas/">
+          <div class="bento-titulo">✅ Tareas</div>
+          <div class="bento-cifra" id="tareasCifra">—</div>
+          <div class="bento-sub" id="tareasSub">Cargando…</div>
+        </a>
+        <div class="conectar" id="tareasConectar" style="display:none;">
+          <input type="text" id="tareasTokenInput" placeholder="Pega tu token">
+          <button class="btn" id="tareasTokenBtn">Conectar</button>
+        </div>
       </div>
-    </a>
 
-    <a class="card" href="habitos/">
-      <div class="icon habitos">🔁</div>
-      <div class="card-body">
-        <h2>Hábitos</h2>
-        <p>Marca tus hábitos del día y revisa tu racha</p>
+      <!-- GASTO DEL MES -->
+      <div class="tarjeta bento-tarjeta span2">
+        <a class="bento-link" href="gastos/">
+          <div class="bento-titulo">💰 Gasto del mes</div>
+          <div class="bento-cifra" id="gastoCifra">—</div>
+          <div class="bento-sub" id="gastoSub">Cargando…</div>
+        </a>
       </div>
-    </a>
 
-    <a class="card" href="tareas/">
-      <div class="icon tareas">✅</div>
-      <div class="card-body">
-        <h2>Tareas</h2>
-        <p>Pendientes con fecha límite sincronizada a tu Calendar</p>
+      <!-- RUNNING -->
+      <div class="tarjeta bento-tarjeta span2">
+        <a class="bento-link" href="running/">
+          <div class="bento-titulo">🏃 Running</div>
+          <div class="bento-cifra" id="runningCifra">—</div>
+          <div class="bento-sub" id="runningSub">Cargando…</div>
+        </a>
+        <div class="conectar" id="runningConectar" style="display:none;">
+          <input type="text" id="runningTokenInput" placeholder="Pega tu token">
+          <button class="btn" id="runningTokenBtn">Conectar</button>
+        </div>
       </div>
-    </a>
 
-    <a class="card" href="notas/">
-      <div class="icon notas">🧠</div>
-      <div class="card-body">
-        <h2>Notas</h2>
-        <p>Ideas y recordatorios, clasificados solos desde el bot</p>
+      <!-- INVERSIONES (queda bloqueada a propósito) -->
+      <div class="tarjeta bento-tarjeta bloqueada">
+        <a class="bento-link" href="inversiones/">
+          <div class="bento-titulo">📈 Inversiones</div>
+          <div class="bento-cifra" style="font-size:15px;">🔒 privado</div>
+          <div class="bento-sub">Ver detalle</div>
+        </a>
       </div>
-    </a>
 
-    <a class="card" href="running/">
-      <div class="icon running">🏃</div>
-      <div class="card-body">
-        <h2>Running</h2>
-        <p>Sesiones de trote y rutina de piernas con bandas</p>
-      </div>
-    </a>
+    </div>
 
-    <a class="card" href="inversiones/">
-      <div class="icon inversiones">📈</div>
-      <div class="card-body">
-        <h2>Inversiones <span class="badge-privado">🔒 privado</span></h2>
-        <p>Portafolio, aportes y evolución semanal</p>
-      </div>
-    </a>
+    <div class="seccion-label">Módulos</div>
+    <div class="grid">
+      <a class="card" href="gastos/">
+        <div class="icon gastos">💰</div>
+        <div class="card-body"><h2>Gastos</h2><p>Control financiero, categorías y conciliación</p></div>
+      </a>
+      <a class="card" href="gastos/gastos2.html">
+        <div class="icon gastos2">✨</div>
+        <div class="card-body"><h2>Gastos 2.0 <span class="badge-beta">BETA</span></h2><p>Zona Dura/Flexible, termómetro, heatmap y runway</p></div>
+      </a>
+      <a class="card" href="habitos/">
+        <div class="icon habitos">🔁</div>
+        <div class="card-body"><h2>Hábitos</h2><p>Marca tus hábitos del día y revisa tu racha</p></div>
+      </a>
+      <a class="card" href="tareas/">
+        <div class="icon tareas">✅</div>
+        <div class="card-body"><h2>Tareas</h2><p>Pendientes con fecha límite sincronizada a tu Calendar</p></div>
+      </a>
+      <a class="card" href="notas/">
+        <div class="icon notas">🧠</div>
+        <div class="card-body"><h2>Notas</h2><p>Ideas y recordatorios, clasificados solos desde el bot</p></div>
+      </a>
+      <a class="card" href="running/">
+        <div class="icon running">🏃</div>
+        <div class="card-body"><h2>Running</h2><p>Sesiones de trote y rutina de piernas con bandas</p></div>
+      </a>
+      <a class="card" href="inversiones/">
+        <div class="icon inversiones">📈</div>
+        <div class="card-body"><h2>Inversiones <span class="badge-privado">🔒 privado</span></h2><p>Portafolio, aportes y evolución semanal</p></div>
+      </a>
+    </div>
+
+    <footer>Datos vivos desde Google Sheets</footer>
   </div>
 
-  <footer>Datos vivos desde Google Sheets</footer>
+<script>
+  // ---------- Tema claro/oscuro ----------
+  var ICONO_SOL = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="10" cy="10" r="3.4"/><path d="M10 2v2M10 16v2M18 10h-2M4 10H2M15.5 4.5l-1.4 1.4M5.9 14.1l-1.4 1.4M15.5 15.5l-1.4-1.4M5.9 5.9L4.5 4.5"/></svg>';
+  var ICONO_LUNA = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M16.5 12.3A7 7 0 018 3.5a7 7 0 106.9 8.8 6.9 6.9 0 011.6 0z"/></svg>';
+  var btnTema = document.getElementById('theme-toggle');
+  function aplicarTema(t){
+    document.documentElement.setAttribute('data-theme', t);
+    btnTema.innerHTML = t === 'light' ? ICONO_LUNA : ICONO_SOL;
+    localStorage.setItem('tema-dashboard', t);
+  }
+  aplicarTema(document.documentElement.getAttribute('data-theme') || 'dark');
+  btnTema.addEventListener('click', function(){
+    aplicarTema((document.documentElement.getAttribute('data-theme') || 'dark') === 'light' ? 'dark' : 'light');
+  });
 
-  <script>
-    var ICONO_SOL = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="10" cy="10" r="3.4"/><path d="M10 2v2M10 16v2M18 10h-2M4 10H2M15.5 4.5l-1.4 1.4M5.9 14.1l-1.4 1.4M15.5 15.5l-1.4-1.4M5.9 5.9L4.5 4.5"/></svg>';
-    var ICONO_LUNA = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M16.5 12.3A7 7 0 018 3.5a7 7 0 106.9 8.8 6.9 6.9 0 011.6 0z"/></svg>';
-    var btn = document.getElementById('theme-toggle');
-    function aplicarTema(tema){
-      document.documentElement.setAttribute('data-theme', tema);
-      btn.innerHTML = tema === 'light' ? ICONO_LUNA : ICONO_SOL;
-      localStorage.setItem('tema-dashboard', tema);
-    }
-    aplicarTema(document.documentElement.getAttribute('data-theme') || 'dark');
-    btn.addEventListener('click', function(){
-      var actual = document.documentElement.getAttribute('data-theme') || 'dark';
-      aplicarTema(actual === 'light' ? 'dark' : 'light');
+  // ---------- Utilidades de fecha ----------
+  function hoyISO(){
+    var d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+  function parseFechaGastos(str){
+    if(!str) return null;
+    var s = String(str).trim();
+    var m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+    if(m) return new Date(Number(m[1]), Number(m[2])-1, Number(m[3]));
+    m = s.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+    if(m) return new Date(Number(m[3]), Number(m[2])-1, Number(m[1]));
+    return null;
+  }
+  function fmt(n){ return '$' + Math.round(Number(n)||0).toLocaleString('es-CL'); }
+
+  // ═══════════════ HÁBITOS + TAREAS (mismo backend, Sistema Personal) ═══════════════
+  const SP_URL = 'https://script.google.com/macros/s/AKfycbx3lZ_F9YFewjjnvCPxvYYUzhghUbK5aeNX1yUhIyKA1JDZo6Jx7UjGVK0yW_pdUERm/exec';
+  const SP_TOKEN_KEY = 'sistemapersonal_webhook_token';
+
+  function habilitarConectar(prefijo, alConectar){
+    document.getElementById(prefijo + 'Conectar').style.display = 'block';
+    document.getElementById(prefijo + 'Sub').textContent = 'Conecta tu token para ver esto';
+    document.getElementById(prefijo + 'Cifra').textContent = '🔒';
+    document.getElementById(prefijo + 'TokenBtn').addEventListener('click', function(){
+      var val = document.getElementById(prefijo + 'TokenInput').value.trim();
+      if(!val) return;
+      localStorage.setItem(SP_TOKEN_KEY, val);
+      document.getElementById(prefijo + 'Conectar').style.display = 'none';
+      alConectar();
     });
-  </script>
+  }
+
+  function cargarSistemaPersonal(){
+    var token = localStorage.getItem(SP_TOKEN_KEY) || '';
+    if(!token){
+      habilitarConectar('habitos', cargarSistemaPersonal);
+      habilitarConectar('tareas', cargarSistemaPersonal);
+      return;
+    }
+    fetch(SP_URL + '?action=data&token=' + encodeURIComponent(token))
+      .then(r => r.json())
+      .then(json => {
+        if(!json.ok) throw new Error(json.error || 'Token inválido');
+        pintarHabitos(json.config || [], json.registros || []);
+        pintarTareas(json.tareas || []);
+      })
+      .catch(err => {
+        document.getElementById('habitosSub').textContent = 'No se pudo cargar';
+        document.getElementById('tareasSub').textContent = 'No se pudo cargar';
+      });
+  }
+
+  function pintarHabitos(config, registros){
+    var hoy = hoyISO();
+    function estadoDe(habito, fecha){
+      var r = registros.find(x => x.Habito === habito && x.Fecha === fecha);
+      return r ? (r.Cumplido === true || r.Cumplido === 'TRUE') : false;
+    }
+    var total = config.length;
+    var hechos = config.filter(h => estadoDe(h.Habito, hoy)).length;
+    document.getElementById('habitosCifra').textContent = hechos + '/' + total;
+    document.getElementById('habitosSub').textContent = total ? (hechos === total ? '¡Todos listos! 🎉' : (total - hechos) + ' pendientes hoy') : 'Sin hábitos configurados';
+    document.getElementById('habitosBarra').style.width = (total ? Math.round(hechos/total*100) : 0) + '%';
+  }
+
+  function pintarTareas(tareas){
+    var hoy = hoyISO();
+    var pendientes = tareas.filter(t => t.Estado !== 'Hecho');
+    var vencidas = pendientes.filter(t => t.FechaLimite && t.FechaLimite < hoy).length;
+    document.getElementById('tareasCifra').textContent = pendientes.length;
+    document.getElementById('tareasSub').textContent = vencidas > 0
+      ? (vencidas + ' vencida' + (vencidas === 1 ? '' : 's'))
+      : (pendientes.length ? 'Pendientes al día' : 'Sin pendientes 🎉');
+  }
+
+  cargarSistemaPersonal();
+
+  // ═══════════════ GASTO DEL MES (CSV público, sin token) ═══════════════
+  const CSV_MOVIMIENTOS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRLfN2qjT0gT6YQloWSrSyJ4eJgZtF1LnCXEjDMZlOlwz_72G0L8lTHNOZmnepcCq3k2dvX7WJ5upLx/pub?gid=0&single=true&output=csv';
+
+  Papa.parse(CSV_MOVIMIENTOS, {
+    download: true, header: true, skipEmptyLines: true,
+    complete: function(r){
+      try{
+        var hoy = new Date();
+        var gastoMes = 0, n = 0;
+        r.data.forEach(function(m){
+          var f = parseFechaGastos(m['Fecha']);
+          if(!f || f.getMonth() !== hoy.getMonth() || f.getFullYear() !== hoy.getFullYear()) return;
+          if(m['Tipo'] !== 'Gasto') return;
+          var monto = Number(String(m['Monto']||'').replace(/[^\d.-]/g,'')) || 0;
+          gastoMes += monto; n++;
+        });
+        document.getElementById('gastoCifra').textContent = fmt(gastoMes);
+        document.getElementById('gastoSub').textContent = n + ' movimiento' + (n===1?'':'s') + ' este mes';
+      }catch(e){
+        document.getElementById('gastoSub').textContent = 'No se pudo cargar';
+      }
+    },
+    error: function(){ document.getElementById('gastoSub').textContent = 'No se pudo cargar'; }
+  });
+
+  // ═══════════════ RUNNING ═══════════════
+  const RUN_URL = 'https://script.google.com/macros/s/AKfycbz9X2EgL1bW6wyiX0aeBcFE0sHde8ryGTur6bSwvVl9rhGYRymncAX0YAWUyHEDlyzOhA/exec';
+  const RUN_TOKEN_KEY = 'running_webhook_token';
+  const FECHA_CARRERA = new Date('2026-10-18T00:00:00');
+
+  function cargarRunning(){
+    var token = localStorage.getItem(RUN_TOKEN_KEY) || '';
+    if(!token){
+      document.getElementById('runningConectar').style.display = 'block';
+      document.getElementById('runningSub').textContent = 'Conecta tu token para ver esto';
+      document.getElementById('runningCifra').textContent = '🔒';
+      document.getElementById('runningTokenBtn').addEventListener('click', function(){
+        var val = document.getElementById('runningTokenInput').value.trim();
+        if(!val) return;
+        localStorage.setItem(RUN_TOKEN_KEY, val);
+        document.getElementById('runningConectar').style.display = 'none';
+        cargarRunning();
+      });
+      return;
+    }
+    fetch(RUN_URL + '?action=data&token=' + encodeURIComponent(token))
+      .then(r => r.json())
+      .then(json => {
+        if(!json.ok) throw new Error(json.error || 'Token inválido');
+        var hist = (json.historial || [])
+          .map(h => ({...h, _fecha: new Date(h['Fecha'])}))
+          .filter(h => !isNaN(h._fecha))
+          .sort((a,b) => a._fecha - b._fecha);
+        var hoy = new Date(); hoy.setHours(0,0,0,0);
+        var dias = Math.round((FECHA_CARRERA - hoy) / 86400000);
+        document.getElementById('runningCifra').textContent = (dias >= 0 ? dias + ' días' : 'Ya pasó');
+        if(hist.length){
+          var u = hist[hist.length - 1];
+          document.getElementById('runningSub').textContent = 'Última: ' + (u['Distancia (km)'] || '—') + ' km' + (u['Ritmo'] ? ' a ' + u['Ritmo'] + '/km' : '');
+        } else {
+          document.getElementById('runningSub').textContent = 'para la carrera del 18-oct';
+        }
+      })
+      .catch(err => {
+        document.getElementById('runningSub').textContent = 'No se pudo cargar';
+      });
+  }
+  cargarRunning();
+</script>
 </body>
 </html>
