@@ -7,7 +7,8 @@
 <link rel="apple-touch-icon" href="../icono-hub-180.png">
 <title>Inversiones — Hub personal</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../hub.css">
 <script>
   // Mismo tema (claro/oscuro) que el resto del hub
   (function(){
@@ -29,10 +30,11 @@
   *{box-sizing:border-box;margin:0;padding:0;}
   [hidden]{display:none !important;}
   body{
-    font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-family:var(--fuente-cuerpo),-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
     background:var(--bg); color:var(--text); min-height:100vh; line-height:1.5;
     padding:24px 16px 56px; transition:background .2s ease,color .2s ease;
   }
+  h1,h2,h3{font-family:var(--fuente-titulo);}
   .contenedor{max-width:980px;margin:0 auto;}
   .theme-toggle{
     position:fixed; top:16px; right:16px; width:38px; height:38px; border-radius:20px;
@@ -94,7 +96,7 @@
   .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;}
   .kpi{background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;}
   .kpi span{display:block;color:var(--muted);font-size:12.5px;}
-  .kpi strong{font-size:19px;font-weight:700;font-variant-numeric:tabular-nums;}
+  .kpi strong{font-size:19px;font-weight:700;font-variant-numeric:tabular-nums;font-family:var(--fuente-numeros);}
 
   /* ---- Gráfico ---- */
   #grafico-wrap{overflow-x:auto;padding-bottom:6px;}
