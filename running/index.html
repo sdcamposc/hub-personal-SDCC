@@ -250,7 +250,7 @@ header{
 
 <main>
 
-  <div id="loading" class="loading">Cargando datos…</div>
+  <div id="loading" class="loading">Pega tu token en la pestaña "Registrar" para cargar tus datos.</div>
 
   <!-- ==================== DASHBOARD ==================== -->
   <section id="tab-dashboard" class="tab-panel">
@@ -385,6 +385,7 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbz9X2EgL1bW6wyiX0ae
 const FECHA_CARRERA = new Date('2026-10-18T00:00:00');
 const META_RITMO_SEG = 6*60+24; // 6'24"/km
 const OBJETIVO_CADENCIA = 158;
+const TOKEN_KEY = 'running_webhook_token';
 
 let DATA = { historial: [], piernas: [] };
 
@@ -437,24 +438,36 @@ function weekStart(date){
   return d;
 }
 
+// ---------- Token (se comparte entre lectura y escritura) ----------
+function getToken(){ return localStorage.getItem(TOKEN_KEY) || ''; }
+
 // ---------- Carga de datos ----------
 async function cargarDatos(){
+  const token = getToken();
+  const loadingEl = document.getElementById('loading');
+  if(!token){
+    loadingEl.style.display = 'block';
+    loadingEl.textContent = 'Pega tu token en la pestaña "Registrar" para cargar tus datos.';
+    return;
+  }
+  loadingEl.style.display = 'block';
+  loadingEl.textContent = 'Cargando datos…';
   try{
-    const res = await fetch(WEBHOOK_URL + '?action=data');
+    const res = await fetch(WEBHOOK_URL + '?action=data&token=' + encodeURIComponent(token));
     const json = await res.json();
     if(!json.ok) throw new Error(json.error || 'Respuesta no ok');
     DATA.historial = json.historial || [];
     DATA.piernas = json.piernas || [];
     DATA.notaProximaSesion = json.notaProximaSesion || '';
-    document.getElementById('loading').style.display = 'none';
-    document.querySelectorAll('.tab-panel')[0].classList.add('active');
+    loadingEl.style.display = 'none';
     renderDashboard();
     renderHistorial();
     renderSesionAnterior();
     renderProximaSesion();
     renderPiernasGrid();
   }catch(err){
-    document.getElementById('loading').textContent = 'No se pudo cargar: ' + err.message;
+    loadingEl.style.display = 'block';
+    loadingEl.textContent = 'No se pudo cargar: ' + err.message;
   }
 }
 
@@ -604,7 +617,7 @@ function renderProximaSesion(){
 }
 
 document.getElementById('btn-guardar-nota').addEventListener('click', async () => {
-  const token = localStorage.getItem('running_webhook_token') || '';
+  const token = getToken();
   const resultado = document.getElementById('nota-guardar-resultado');
   if(!token){ resultado.textContent = 'Falta el token (pégalo en la pestaña Registrar).'; resultado.style.color = 'var(--red)'; return; }
   const texto = document.getElementById('proxima-sesion-input').value;
@@ -692,8 +705,11 @@ document.querySelectorAll('.sub-btn[data-regsub]').forEach(btn=>{
 
 // ---------- Registrar ----------
 const tokenInput = document.getElementById('reg-token');
-tokenInput.value = localStorage.getItem('running_webhook_token') || '';
-tokenInput.addEventListener('change', ()=> localStorage.setItem('running_webhook_token', tokenInput.value.trim()));
+tokenInput.value = getToken();
+tokenInput.addEventListener('change', ()=>{
+  localStorage.setItem(TOKEN_KEY, tokenInput.value.trim());
+  cargarDatos(); // ahora que hay token (o cambió), intenta cargar de nuevo
+});
 
 document.getElementById('btn-registrar').addEventListener('click', async ()=>{
   const token = tokenInput.value.trim();
@@ -764,6 +780,8 @@ themeBtn.addEventListener('click', function(){
   location.reload();
 });
 
+// Muestra el dashboard de entrada (antes se activaba solo al cargar datos con éxito)
+document.querySelectorAll('.tab-panel')[0].classList.add('active');
 cargarDatos();
 </script>
 </body>
