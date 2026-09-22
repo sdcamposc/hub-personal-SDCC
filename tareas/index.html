@@ -144,9 +144,9 @@
 
   <main>
     <div id="settingsCard" class="settings-card" style="display:none;">
-      <label>Token de escritura (se guarda solo en este navegador)</label>
+      <label>Token (se guarda solo en este navegador)</label>
       <input type="text" id="tokenInput" placeholder="Pega tu token una vez">
-      <div class="settings-hint">Sin esto puedes ver tus tareas pero no crearlas ni marcarlas.</div>
+      <div class="settings-hint">Sin esto no puedes ver ni crear tareas: la lectura también requiere token.</div>
     </div>
 
     <div id="loading" class="loading">Cargando…</div>
@@ -196,6 +196,14 @@ const TOKEN_KEY = 'sistemapersonal_webhook_token';
 
 let TAREAS = [];
 
+// Escapa texto antes de insertarlo como HTML, para que una tarea con texto
+// malicioso en su nombre o categoría nunca pueda ejecutar código en el navegador.
+function esc(s){
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
 // ---------- Tema claro/oscuro ----------
 const ICONO_SOL = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="10" cy="10" r="3.4"/><path d="M10 2v2M10 16v2M18 10h-2M4 10H2M15.5 4.5l-1.4 1.4M5.9 14.1l-1.4 1.4M15.5 15.5l-1.4-1.4M5.9 5.9L4.5 4.5"/></svg>';
 const ICONO_LUNA = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M16.5 12.3A7 7 0 018 3.5a7 7 0 106.9 8.8 6.9 6.9 0 011.6 0z"/></svg>';
@@ -220,6 +228,7 @@ tokenInput.value = getToken();
 tokenInput.addEventListener('change', () => {
   localStorage.setItem(TOKEN_KEY, tokenInput.value.trim());
   actualizarVisibilidadSettings();
+  cargarDatos(); // ahora que hay token, intenta cargar
 });
 actualizarVisibilidadSettings();
 
@@ -236,8 +245,13 @@ function formatearFechaCorta(iso){
 
 // ---------- Carga de datos ----------
 async function cargarDatos(){
+  const token = getToken();
+  if(!token){
+    document.getElementById('loading').textContent = 'Pega tu token arriba para ver tus tareas.';
+    return;
+  }
   try{
-    const res = await fetch(WEBHOOK_URL + '?action=data');
+    const res = await fetch(WEBHOOK_URL + '?action=data&token=' + encodeURIComponent(token));
     const json = await res.json();
     if(!json.ok) throw new Error(json.error || 'Respuesta no ok');
     TAREAS = json.tareas || [];
@@ -245,6 +259,7 @@ async function cargarDatos(){
     document.getElementById('contenido').style.display = 'block';
     render();
   }catch(err){
+    document.getElementById('loading').style.display = 'block';
     document.getElementById('loading').textContent = 'No se pudo cargar: ' + err.message;
   }
 }
@@ -281,19 +296,19 @@ function render(){
       let clase = '';
       if(!hecho && t.FechaLimite < hoy) clase = 'vencida';
       else if(!hecho && t.FechaLimite === hoy) clase = 'hoy';
-      badgeFecha = `<span class="badge ${clase}">📅 ${formatearFechaCorta(t.FechaLimite)}</span>`;
+      badgeFecha = `<span class="badge ${clase}">📅 ${esc(formatearFechaCorta(t.FechaLimite))}</span>`;
     }
-    const badgeCat = t.Categoria ? `<span class="badge">${t.Categoria}</span>` : '';
+    const badgeCat = t.Categoria ? `<span class="badge">${esc(t.Categoria)}</span>` : '';
 
     const row = document.createElement('div');
     row.className = 'tarea-row';
     row.innerHTML = `
-      <div class="check ${hecho ? 'hecho' : ''}" data-id="${t.Id}">${hecho ? '✓' : ''}</div>
+      <div class="check ${hecho ? 'hecho' : ''}" data-id="${esc(t.Id)}">${hecho ? '✓' : ''}</div>
       <div class="tarea-info">
-        <div class="tarea-nombre ${hecho ? 'hecho' : ''}">${t.Tarea}</div>
+        <div class="tarea-nombre ${hecho ? 'hecho' : ''}">${esc(t.Tarea)}</div>
         <div class="tarea-meta">${badgeFecha}${badgeCat}</div>
       </div>
-      <button class="eliminar-btn" data-eliminar="${t.Id}" title="Eliminar tarea">✕</button>
+      <button class="eliminar-btn" data-eliminar="${esc(t.Id)}" title="Eliminar tarea">✕</button>
     `;
     lista.appendChild(row);
   });
