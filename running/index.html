@@ -388,6 +388,14 @@ const OBJETIVO_CADENCIA = 158;
 
 let DATA = { historial: [], piernas: [] };
 
+// Escapa texto antes de insertarlo como HTML: las Notas y la nota de "próxima
+// sesión" son texto libre escrito por ti, así que nunca deben poder ejecutar código.
+function esc(s){
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
 Chart.register(ChartDataLabels);
 Chart.defaults.set('plugins.datalabels', { display: false });
 Chart.defaults.color = getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim();
@@ -570,8 +578,8 @@ function renderSesionAnterior(){
     u['FC (LPM)'] ? 'FC ' + u['FC (LPM)'] : '',
     u['Cadencia (spm)'] ? 'Cadencia ' + u['Cadencia (spm)'] : ''
   ].filter(Boolean).join(' · ');
-  el.innerHTML = `<b>${u['Fecha']}</b> — ${u['Tipo']||''}<br>${detalles || 'Sin métricas adicionales'}` +
-    (u['Notas'] ? `<br><span style="color:var(--text-secondary);">${u['Notas']}</span>` : '');
+  el.innerHTML = `<b>${esc(u['Fecha'])}</b> — ${esc(u['Tipo']||'')}<br>${esc(detalles || 'Sin métricas adicionales')}` +
+    (u['Notas'] ? `<br><span style="color:var(--text-secondary);">${esc(u['Notas'])}</span>` : '');
 }
 
 // ---------- Próxima sesión ----------
@@ -591,8 +599,8 @@ function renderProximaSesion(){
   document.getElementById('proxima-sesion-input').value = nota;
   const display = document.getElementById('proxima-sesion-display');
   display.innerHTML = nota
-    ? nota
-    : `<em style="color:var(--text-secondary);">${sugerenciaAutomatica_()}</em> <span style="font-size:11px;color:var(--text-secondary);">(sugerencia automática)</span>`;
+    ? esc(nota)
+    : `<em style="color:var(--text-secondary);">${esc(sugerenciaAutomatica_())}</em> <span style="font-size:11px;color:var(--text-secondary);">(sugerencia automática)</span>`;
 }
 
 document.getElementById('btn-guardar-nota').addEventListener('click', async () => {
@@ -645,14 +653,14 @@ function renderPiernasGrid(){
 function renderHistorial(){
   const tbodyR = document.querySelector('#tabla-running tbody');
   tbodyR.innerHTML = DATA.historial.slice().reverse().map(h => `
-    <tr><td>${h['Fecha']||''}</td><td>${h['Tipo']||''}</td><td>${h['Distancia (km)']||''}</td>
-    <td>${h['Ritmo']||''}</td><td>${h['FC (LPM)']||''}</td><td>${h['Cadencia (spm)']||''}</td><td>${h['Notas']||''}</td></tr>
+    <tr><td>${esc(h['Fecha'])}</td><td>${esc(h['Tipo'])}</td><td>${esc(h['Distancia (km)'])}</td>
+    <td>${esc(h['Ritmo'])}</td><td>${esc(h['FC (LPM)'])}</td><td>${esc(h['Cadencia (spm)'])}</td><td>${esc(h['Notas'])}</td></tr>
   `).join('');
 
   const tbodyF = document.querySelector('#tabla-fuerza tbody');
   tbodyF.innerHTML = DATA.piernas.slice().reverse().map(p => `
-    <tr><td>${p['Fecha']||''}</td><td>${p['Tipo']||''}</td><td>${p['Duración (min)']||''}</td>
-    <td>${p['FC (LPM)']||''}</td><td>${p['RPE (1-10)']||''}</td><td>${p['Banda']||''}</td><td>${p['Notas']||''}</td></tr>
+    <tr><td>${esc(p['Fecha'])}</td><td>${esc(p['Tipo'])}</td><td>${esc(p['Duración (min)'])}</td>
+    <td>${esc(p['FC (LPM)'])}</td><td>${esc(p['RPE (1-10)'])}</td><td>${esc(p['Banda'])}</td><td>${esc(p['Notas'])}</td></tr>
   `).join('');
 }
 
