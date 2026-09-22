@@ -269,6 +269,7 @@
         <a href="index.html" class="link-cruzado" title="Volver a la vista clásica">← Clásica</a>
         <select id="selectorMes"></select>
         <button class="theme-toggle" id="btnExportar" title="Exportar reporte del mes" aria-label="Exportar reporte">🖨️</button>
+        <button class="theme-toggle" id="btnToken" title="Cambiar token de escritura" aria-label="Cambiar token de escritura">🔑</button>
         <button class="theme-toggle" id="themeToggle" title="Cambiar tema" aria-label="Cambiar tema claro/oscuro"></button>
       </div>
     </div>
@@ -498,8 +499,36 @@ const CSV_TOPES = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRLfN2qjT0gT6
 const CSV_CONCILIACION = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRLfN2qjT0gT6YQloWSrSyJ4eJgZtF1LnCXEjDMZlOlwz_72G0L8lTHNOZmnepcCq3k2dvX7WJ5upLx/pub?gid=1313860211&single=true&output=csv';
 const CSV_CUOTAS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRLfN2qjT0gT6YQloWSrSyJ4eJgZtF1LnCXEjDMZlOlwz_72G0L8lTHNOZmnepcCq3k2dvX7WJ5upLx/pub?gid=2134012895&single=true&output=csv';
 const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbxvN2rvCP5jt7xWkcpEsHjokcMoUGFuWsNncUs26oqdAmfrTR_t-MtkYn8TsUz-9pVyjw/exec';
-const DASHBOARD_SECRET = 'scc-gastos-2026-x7f2';
 const META_INGRESO_MENSUAL = 2600000;
+
+// ---- Token de escritura: ya NO va escrito en el código. Se pide una vez y se
+// guarda solo en este navegador (localStorage) — mismo token que en index.html. ----
+const TOKEN_KEY = 'gastos_dashboard_token';
+function getToken(){
+  let t = localStorage.getItem(TOKEN_KEY);
+  if(!t){
+    t = prompt('Pega tu token de escritura de Gastos (se guarda solo en este navegador):');
+    if(t) localStorage.setItem(TOKEN_KEY, t.trim());
+  }
+  return localStorage.getItem(TOKEN_KEY) || '';
+}
+document.addEventListener('DOMContentLoaded', () => {
+  const btnToken = document.getElementById('btnToken');
+  if(btnToken){
+    btnToken.addEventListener('click', () => {
+      localStorage.removeItem(TOKEN_KEY);
+      getToken();
+    });
+  }
+});
+
+// Escapa texto antes de insertarlo como HTML, para que un movimiento con texto
+// malicioso en su descripción/comercio nunca pueda ejecutar código en el navegador.
+function esc(s){
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
 
 const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
@@ -847,8 +876,8 @@ function renderMes(anio, mesIdx){
       <div class="ledger-row-top">
         <div class="ledger-left">
           <span class="signal" style="background:${color}"></span>
-          <span class="ledger-emoji">${prefijoEmoji}${ICONOS_CAT[cat] || '📌'}</span>
-          <span class="ledger-name">${cat}</span>
+          <span class="ledger-emoji">${esc(prefijoEmoji)}${esc(ICONOS_CAT[cat] || '📌')}</span>
+          <span class="ledger-name">${esc(cat)}</span>
         </div>
         <div class="ledger-right">
           <div class="ledger-amt-wrap">
@@ -1015,8 +1044,8 @@ function pintarTabla(lista, filtro){
     const idMov = m['ID'] || '';
     const fijoActual = (m['Tipo_Fijo']||'').trim();
     const selectId = 'fijo-' + idMov;
-    tr.innerHTML = `<td>${m['Fecha']||''}</td><td><span class="${claseTag}">${tipo}</span></td><td>${catConEmoji}</td><td>${m['Comercio_Descripción']||''}</td><td class="amt">${fmt(m._monto)}</td>
-      <td><select id="${selectId}" class="select-fijo" data-id="${idMov}">
+    tr.innerHTML = `<td>${esc(m['Fecha'])}</td><td><span class="${claseTag}">${esc(tipo)}</span></td><td>${esc(catConEmoji)}</td><td>${esc(m['Comercio_Descripción'])}</td><td class="amt">${fmt(m._monto)}</td>
+      <td><select id="${esc(selectId)}" class="select-fijo" data-id="${esc(idMov)}">
         <option value="" ${fijoActual===''?'selected':''}>—</option>
         <option value="Duro" ${fijoActual==='Duro'?'selected':''}>Duro</option>
         <option value="Flexible" ${fijoActual==='Flexible'?'selected':''}>Flexible</option>
@@ -1030,10 +1059,12 @@ function pintarTabla(lista, filtro){
 
 function guardarFijo_(id, tipoFijo, selectEl){
   if(!id){ return; }
+  const token = getToken();
+  if(!token){ return; }
   selectEl.disabled = true;
   fetch(WEBAPP_URL, {
     method:'POST',
-    body: JSON.stringify({ accion:'marcarFijo', secreto: DASHBOARD_SECRET, id: id, tipoFijo: tipoFijo })
+    body: JSON.stringify({ accion:'marcarFijo', secreto: token, id: id, tipoFijo: tipoFijo })
   }).then(r => r.json()).then(r => {
     selectEl.disabled = false;
     if(!r.ok){ alert('No se pudo guardar: ' + (r.error||'error')); }
@@ -1066,11 +1097,13 @@ function poblarFormulario(){
     if(!monto || Number(monto) <= 0){
       msg.textContent = 'Ingresa un monto válido.'; msg.className = 'form-msg err'; return;
     }
+    const token = getToken();
+    if(!token){ msg.textContent = 'Falta el token de escritura.'; msg.className = 'form-msg err'; return; }
     btn.disabled = true; msg.textContent = 'Registrando…'; msg.className = 'form-msg';
     fetch(WEBAPP_URL, {
       method:'POST',
       body: JSON.stringify({
-        accion:'registrar', secreto: DASHBOARD_SECRET,
+        accion:'registrar', secreto: token,
         tipo: fTipo.value, monto: monto,
         categoria: (fTipo.value==='Gasto'||fTipo.value==='Ahorro') ? fCategoria.value : '',
         cuenta: document.getElementById('fCuenta').value,
@@ -1123,7 +1156,7 @@ function renderConciliacion(datos){
     const color = pct >= 90 ? 'var(--green)' : (pct >= 70 ? 'var(--naranjo)' : 'var(--red)');
     const div = document.createElement('div');
     div.className = 'conc-banco';
-    div.innerHTML = `<div>${r['Banco']}<div class="conc-fecha">${r['Fecha']}</div></div><div class="conc-pct" style="color:${color}">${pct}%</div>`;
+    div.innerHTML = `<div>${esc(r['Banco'])}<div class="conc-fecha">${esc(r['Fecha'])}</div></div><div class="conc-pct" style="color:${color}">${pct}%</div>`;
     cont.appendChild(div);
   });
 }
@@ -1136,7 +1169,7 @@ function poblarEditorTopes(){
     const row = document.createElement('div');
     row.className = 'tope-row';
     row.innerHTML = `
-      <span>${ICONOS_CAT[cat]||''} ${cat}</span>
+      <span>${esc(ICONOS_CAT[cat]||'')} ${esc(cat)}</span>
       <input type="number" value="${TOPES[cat]}" id="tope-${cat.replace(/[^a-zA-Z0-9]/g,'')}">
       <button type="button">Guardar</button>
     `;
@@ -1160,10 +1193,12 @@ function guardarTope_(categoria, valor, btn){
     msg.textContent = '⚠️ El tope no puede superar $1.000.000 desde acá. Ajústalo directo en el Sheet si es un valor real más alto.';
     msg.style.color = 'var(--red)'; return;
   }
+  const token = getToken();
+  if(!token){ msg.textContent = 'Falta el token de escritura.'; msg.style.color = 'var(--red)'; return; }
   btn.disabled = true; msg.textContent = 'Guardando…'; msg.style.color = 'var(--muted)';
   fetch(WEBAPP_URL, {
     method:'POST',
-    body: JSON.stringify({ accion:'actualizarTope', secreto: DASHBOARD_SECRET, categoria: categoria, nuevoTope: nuevoTope })
+    body: JSON.stringify({ accion:'actualizarTope', secreto: token, categoria: categoria, nuevoTope: nuevoTope })
   }).then(r => r.json()).then(r => {
     btn.disabled = false;
     if(r.ok){
@@ -1358,7 +1393,7 @@ function renderCuotas(datos){
     const pct = Math.min(100, Math.round(actual/total*100));
     const div = document.createElement('div');
     div.className = 'conc-banco';
-    div.innerHTML = `<div>${r['Comercio']||''}<div class="conc-fecha">Cuota ${actual}/${total} · ${fmt(r['Valor_Mensual'])}/mes</div></div><div class="conc-pct" style="color:var(--blue)">${pct}%</div>`;
+    div.innerHTML = `<div>${esc(r['Comercio'])}<div class="conc-fecha">Cuota ${actual}/${total} · ${fmt(r['Valor_Mensual'])}/mes</div></div><div class="conc-pct" style="color:var(--blue)">${pct}%</div>`;
     cont.appendChild(div);
   });
 }
