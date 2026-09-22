@@ -10,7 +10,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="hub.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <script>
   (function(){
     var guardado = localStorage.getItem('tema-dashboard') || 'dark';
@@ -144,6 +143,10 @@
           <div class="bento-cifra" id="gastoCifra">—</div>
           <div class="bento-sub" id="gastoSub">Cargando…</div>
         </a>
+        <div class="conectar" id="gastoConectar" style="display:none;">
+          <input type="text" id="gastoTokenInput" placeholder="Pega tu token">
+          <button class="btn" id="gastoTokenBtn">Conectar</button>
+        </div>
       </div>
 
       <!-- RUNNING -->
@@ -298,16 +301,35 @@
 
   cargarSistemaPersonal();
 
-  // ═══════════════ GASTO DEL MES (CSV público, sin token) ═══════════════
-  const CSV_MOVIMIENTOS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRLfN2qjT0gT6YQloWSrSyJ4eJgZtF1LnCXEjDMZlOlwz_72G0L8lTHNOZmnepcCq3k2dvX7WJ5upLx/pub?gid=0&single=true&output=csv';
+  // ═══════════════ GASTO DEL MES (endpoint protegido con token, ya no CSV público) ═══════════════
+  const GASTOS_URL = 'https://script.google.com/macros/s/AKfycbxvN2rvCP5jt7xWkcpEsHjokcMoUGFuWsNncUs26oqdAmfrTR_t-MtkYn8TsUz-9pVyjw/exec';
+  const GASTOS_TOKEN_KEY = 'gastos_dashboard_token';
 
-  Papa.parse(CSV_MOVIMIENTOS, {
-    download: true, header: true, skipEmptyLines: true,
-    complete: function(r){
-      try{
+  function cargarGasto(){
+    var token = localStorage.getItem(GASTOS_TOKEN_KEY) || '';
+    if(!token){
+      document.getElementById('gastoConectar').style.display = 'block';
+      document.getElementById('gastoSub').textContent = 'Conecta tu token para ver esto';
+      document.getElementById('gastoCifra').textContent = '🔒';
+      document.getElementById('gastoTokenBtn').addEventListener('click', function(){
+        var val = document.getElementById('gastoTokenInput').value.trim();
+        if(!val) return;
+        localStorage.setItem(GASTOS_TOKEN_KEY, val);
+        document.getElementById('gastoConectar').style.display = 'none';
+        cargarGasto();
+      });
+      return;
+    }
+    fetch(GASTOS_URL, {
+      method: 'POST',
+      body: JSON.stringify({ accion: 'datosProtegidos', secreto: token })
+    })
+      .then(r => r.json())
+      .then(json => {
+        if(!json.ok) throw new Error(json.error || 'Token inválido');
         var hoy = new Date();
         var gastoMes = 0, n = 0;
-        r.data.forEach(function(m){
+        (json.movimientos || []).forEach(function(m){
           var f = parseFechaGastos(m['Fecha']);
           if(!f || f.getMonth() !== hoy.getMonth() || f.getFullYear() !== hoy.getFullYear()) return;
           if(m['Tipo'] !== 'Gasto') return;
@@ -316,12 +338,12 @@
         });
         document.getElementById('gastoCifra').textContent = fmt(gastoMes);
         document.getElementById('gastoSub').textContent = n + ' movimiento' + (n===1?'':'s') + ' este mes';
-      }catch(e){
+      })
+      .catch(err => {
         document.getElementById('gastoSub').textContent = 'No se pudo cargar';
-      }
-    },
-    error: function(){ document.getElementById('gastoSub').textContent = 'No se pudo cargar'; }
-  });
+      });
+  }
+  cargarGasto();
 
   // ═══════════════ RUNNING ═══════════════
   const RUN_URL = 'https://script.google.com/macros/s/AKfycbz9X2EgL1bW6wyiX0aeBcFE0sHde8ryGTur6bSwvVl9rhGYRymncAX0YAWUyHEDlyzOhA/exec';
