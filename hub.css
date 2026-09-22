@@ -1,0 +1,239 @@
+/* ═══════════════════════════════════════════════════════════════
+   hub.css — Sistema de diseño compartido del Hub Personal
+   ═══════════════════════════════════════════════════════════════
+   Un solo archivo para todos los módulos (Gastos, Hábitos, Tareas,
+   Notas, Running, Inversiones). Cambiar el look del hub completo
+   es tocar este archivo, no cada página por separado.
+
+   CÓMO USARLO en cada página:
+   1. Agrega en el <head>, ANTES de cualquier <style> propio de la página:
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="../hub.css">  (ajusta la ruta según la carpeta)
+   2. El script de tema (claro/oscuro) que ya tiene cada página sigue
+      funcionando igual: sigue usando data-theme y localStorage
+      'tema-dashboard' — hub.css solo redefine QUÉ significan esos
+      colores, no CÓMO se activan.
+   3. Los estilos propios de cada página (los que ya tenías) pueden
+      quedarse — hub.css no los borra. Migra de a poco: cuando una
+      clase de aquí (.tarjeta, .btn, .cifra...) te sirva, úsala en vez
+      de reinventar la tuya.
+   ═══════════════════════════════════════════════════════════════ */
+
+:root{
+  /* ---- Tipografía ---- */
+  --fuente-titulo: 'Space Grotesk', 'Plus Jakarta Sans', system-ui, sans-serif;
+  --fuente-cuerpo: 'Inter', 'Plus Jakarta Sans', system-ui, sans-serif;
+  --fuente-numeros: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', monospace;
+
+  /* ---- Colores — modo oscuro (default) ---- */
+  --bg:#0F1620;
+  --surface:#172230;
+  --surface-2:#1E2B3B;
+  --border:#2A3A4D;
+  --text:#EDEFF2;
+  --muted:#8A97A6;
+
+  /* Acento único — úsalo para links, botones primarios, foco */
+  --acento:#6C8EEF;
+  --acento-suave:rgba(108,142,239,.14);
+
+  /* Estados — SOLO para semántica (cumplido/en riesgo/excedido),
+     nunca como color decorativo suelto */
+  --ok:#4ADE94;
+  --ok-suave:rgba(74,222,148,.14);
+  --alerta:#F5B942;
+  --alerta-suave:rgba(245,185,66,.14);
+  --peligro:#F0654E;
+  --peligro-suave:rgba(240,101,78,.14);
+
+  /* ---- Forma y espacio ---- */
+  --radio-sm:8px;
+  --radio:14px;
+  --radio-lg:18px;
+  --sombra: 0 1px 2px rgba(0,0,0,.20), 0 4px 16px rgba(0,0,0,.24);
+  --espacio: 16px;
+}
+
+:root[data-theme="light"]{
+  --bg:#FAF7F2;
+  --surface:#FFFFFF;
+  --surface-2:#F1ECE3;
+  --border:#E4DDD0;
+  --text:#2B2621;
+  --muted:#8C8072;
+
+  --acento:#3F63D1;
+  --acento-suave:rgba(63,99,209,.10);
+
+  --ok:#1FA967;
+  --ok-suave:rgba(31,169,103,.12);
+  --alerta:#C98A1F;
+  --alerta-suave:rgba(201,138,31,.12);
+  --peligro:#D3392A;
+  --peligro-suave:rgba(211,57,42,.12);
+
+  --sombra: 0 1px 2px rgba(0,0,0,.04), 0 4px 14px rgba(0,0,0,.06);
+}
+
+/* ═══════════ Base ═══════════ */
+body{
+  font-family: var(--fuente-cuerpo);
+  background: var(--bg);
+  color: var(--text);
+  transition: background .2s ease, color .2s ease;
+}
+h1, h2, h3, h4{
+  font-family: var(--fuente-titulo);
+  letter-spacing: -0.02em;
+}
+
+/* Números tabulares: alinea columnas de cifras en tablas y tarjetas.
+   Aplícalo a cualquier número (montos, ritmos, contadores). */
+.mono, .cifra, .num{
+  font-family: var(--fuente-numeros);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ═══════════ Tarjeta base ═══════════ */
+.tarjeta{
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radio);
+  box-shadow: var(--sombra);
+  padding: var(--espacio);
+  transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+}
+.tarjeta.interactiva{ cursor: pointer; }
+.tarjeta.interactiva:hover{
+  transform: translateY(-2px);
+  border-color: var(--acento);
+}
+
+/* ═══════════ Botones ═══════════ */
+.btn{
+  font-family: var(--fuente-cuerpo);
+  font-weight: 600;
+  font-size: 14px;
+  padding: 10px 16px;
+  border-radius: var(--radio-sm);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  cursor: pointer;
+  transition: opacity .15s ease, border-color .15s ease;
+}
+.btn:hover{ border-color: var(--acento); }
+.btn:disabled{ opacity: .5; cursor: default; }
+.btn.primario{
+  background: var(--acento);
+  border-color: var(--acento);
+  color: #fff;
+}
+.btn.primario:hover{ opacity: .9; }
+
+/* Botón circular tipo ícono (toggle de tema, acciones de cabecera) */
+.btn-icono{
+  width: 38px; height: 38px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.btn-icono svg{ width: 17px; height: 17px; }
+
+/* ═══════════ Badges / etiquetas de estado ═══════════ */
+.badge{
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 9px;
+  border-radius: 20px;
+  background: var(--surface-2);
+  color: var(--muted);
+}
+.badge.ok{ background: var(--ok-suave); color: var(--ok); }
+.badge.alerta{ background: var(--alerta-suave); color: var(--alerta); }
+.badge.peligro{ background: var(--peligro-suave); color: var(--peligro); }
+.badge.acento{ background: var(--acento-suave); color: var(--acento); }
+
+/* ═══════════ Barra de progreso ═══════════ */
+.barra{
+  height: 6px;
+  background: var(--surface-2);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.barra-fill{
+  height: 100%;
+  border-radius: 4px;
+  background: var(--acento);
+  transition: width .4s ease;
+}
+.barra-fill.ok{ background: var(--ok); }
+.barra-fill.alerta{ background: var(--alerta); }
+.barra-fill.peligro{ background: var(--peligro); }
+
+/* ═══════════ Inputs ═══════════ */
+input, select, textarea{
+  font-family: var(--fuente-cuerpo);
+  width: 100%;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radio-sm);
+  color: var(--text);
+  padding: 10px 12px;
+  font-size: 13.5px;
+}
+input:focus, select:focus, textarea:focus{
+  outline: none;
+  border-color: var(--acento);
+}
+label{
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  display: block;
+  margin-bottom: 5px;
+}
+
+/* ═══════════ Tabla ═══════════ */
+table.tabla-hub{
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+table.tabla-hub th{
+  text-align: left;
+  color: var(--muted);
+  font-weight: 600;
+  padding: 10px 14px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+table.tabla-hub td{
+  padding: 9px 14px;
+  border-top: 1px solid var(--border);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ═══════════ Utilidades ═══════════ */
+.texto-muted{ color: var(--muted); }
+.texto-ok{ color: var(--ok); }
+.texto-alerta{ color: var(--alerta); }
+.texto-peligro{ color: var(--peligro); }
+
+/* Animación breve para "algo se marcó como hecho" — hábitos, tareas */
+@keyframes hub-check-pop{
+  0%{ transform: scale(1); }
+  40%{ transform: scale(1.18); }
+  100%{ transform: scale(1); }
+}
+.check-animado.hecho{
+  animation: hub-check-pop .28s ease;
+}
