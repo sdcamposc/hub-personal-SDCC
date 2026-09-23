@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Control Gastos — Sebastián</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../hub.css">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <style>
   :root{
     --bg:#0F1620;
@@ -42,12 +42,12 @@
   *{box-sizing:border-box;}
   body{
     margin:0; background:var(--bg); color:var(--text);
-    font-family:var(--fuente-cuerpo),sans-serif;
+    font-family:'Plus Jakarta Sans',sans-serif;
     padding:24px 16px 80px;
     transition:background .25s ease, color .25s ease;
   }
-  h1,h2,h3{font-family:var(--fuente-titulo); margin:0; font-weight:700;}
-  .mono{font-family:var(--fuente-numeros),monospace;}
+  h1,h2,h3{font-family:'Plus Jakarta Sans',sans-serif; margin:0; font-weight:700;}
+  .mono{font-family:'JetBrains Mono',monospace;}
   .wrap{max-width:1180px; margin:0 auto;}
 
   .theme-toggle{
@@ -76,7 +76,7 @@
   .header-actions{display:flex; align-items:center; gap:10px;}
   #selectorMes{
     width:auto; background:var(--surface-2); border:1px solid var(--border); border-radius:8px;
-    color:var(--text); padding:8px 12px; font-family:var(--fuente-cuerpo),sans-serif; font-size:13px;
+    color:var(--text); padding:8px 12px; font-family:'Plus Jakarta Sans',sans-serif; font-size:13px;
   }
   .hero,.hero-card,.hero-label,.hero-value,.hero-sub{ } /* legacy, no usados */
   .franja{
@@ -129,15 +129,15 @@
     font-size:9px; background:var(--surface-2); position:relative; gap:1px; padding:2px;
   }
   .heat-cell.hoy{outline:2px solid var(--blue); outline-offset:-1px;}
-  .heat-cell .heat-num{font-family:var(--fuente-numeros),monospace; font-size:10px; font-weight:600;}
-  .heat-cell .heat-monto{font-family:var(--fuente-numeros),monospace; font-size:8px; opacity:.85;}
+  .heat-cell .heat-num{font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:600;}
+  .heat-cell .heat-monto{font-family:'JetBrains Mono',monospace; font-size:8px; opacity:.85;}
   .heatmap-legend{display:flex; align-items:center; gap:5px; margin-top:12px; font-size:10px; color:var(--muted);}
   .heat-swatch{width:14px; height:14px; border-radius:3px;}
 
   .conciliacion-card{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:14px;}
   .conc-banco{display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border); font-size:12.5px;}
   .conc-banco:last-child{border-bottom:none;}
-  .conc-pct{font-family:var(--fuente-numeros),monospace; font-weight:700;}
+  .conc-pct{font-family:'JetBrains Mono',monospace; font-weight:700;}
   .conc-fecha{color:var(--muted); font-size:10.5px;}
 
   .topes-editor{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:12px; display:flex; flex-direction:column; gap:8px;}
@@ -154,17 +154,17 @@
   .chips-row:last-of-type{border-bottom:1px solid var(--border);}
   .chip{
     background:var(--surface-2); border:1px solid var(--border); border-radius:20px; color:var(--muted);
-    padding:5px 11px; font-size:11px; font-family:var(--fuente-cuerpo),sans-serif; cursor:pointer;
+    padding:5px 11px; font-size:11px; font-family:'Plus Jakarta Sans',sans-serif; cursor:pointer;
   }
   .chip.active{background:var(--blue); color:#0F1620; border-color:var(--blue); font-weight:600;}
   .select-fijo{
     background:var(--surface-2); border:1px solid var(--border); border-radius:6px;
-    color:var(--text); padding:4px 6px; font-size:11px; font-family:var(--fuente-cuerpo),sans-serif;
+    color:var(--text); padding:4px 6px; font-size:11px; font-family:'Plus Jakarta Sans',sans-serif;
   }
   .piso-card{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px;}
   .piso-row{display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border); font-size:13px;}
   .piso-row:last-child{border-bottom:none;}
-  .piso-total{font-family:var(--fuente-numeros),monospace; font-weight:700;}
+  .piso-total{font-family:'JetBrains Mono',monospace; font-weight:700;}
   .delta{font-weight:600;}
   .delta.up{color:var(--red);}
   .delta.down{color:var(--green);}
@@ -173,7 +173,7 @@
     padding:18px 20px;
   }
   .hero-label{color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.06em;}
-  .hero-value{font-family:var(--fuente-numeros),monospace; font-size:28px; font-weight:700; margin-top:4px;}
+  .hero-value{font-family:'JetBrains Mono',monospace; font-size:28px; font-weight:700; margin-top:4px;}
   .hero-sub{font-size:12px; color:var(--muted); margin-top:6px;}
   .signal{display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:8px; vertical-align:middle;}
 
@@ -184,7 +184,7 @@
   .section-title-row .section-title{margin-bottom:0;}
   #selectorCategoriaTendencia{
     background:var(--surface-2); border:1px solid var(--border); border-radius:8px;
-    color:var(--text); padding:7px 10px; font-family:var(--fuente-cuerpo),sans-serif; font-size:12.5px;
+    color:var(--text); padding:7px 10px; font-family:'Plus Jakarta Sans',sans-serif; font-size:12.5px;
   }
   .section-title .n{color:var(--muted); font-weight:500; font-size:12px;}
 
@@ -200,7 +200,7 @@
   .ledger-name{font-size:13px; font-weight:500; white-space:normal;}
   .ledger-right{display:flex; align-items:center; gap:10px; flex-shrink:0;}
   .ledger-amt-wrap{text-align:right;}
-  .ledger-amt{font-family:var(--fuente-numeros),monospace; font-size:12px; white-space:nowrap;}
+  .ledger-amt{font-family:'JetBrains Mono',monospace; font-size:12px; white-space:nowrap;}
   .ledger-delta{font-size:10px; color:var(--muted); margin-top:1px; white-space:nowrap;}
   .ledger-duro{font-size:10px; color:var(--blue); margin-top:2px; white-space:nowrap; font-weight:600;}
   .ledger-spark{opacity:.85; flex-shrink:0;}
@@ -222,12 +222,12 @@
   .table-search{padding:12px 14px; border-bottom:1px solid var(--border);}
   .table-search input{
     width:100%; background:var(--surface-2); border:1px solid var(--border); border-radius:8px;
-    color:var(--text); padding:9px 12px; font-family:var(--fuente-cuerpo),sans-serif; font-size:13px;
+    color:var(--text); padding:9px 12px; font-family:'Plus Jakarta Sans',sans-serif; font-size:13px;
   }
   table{width:100%; border-collapse:collapse; font-size:12.5px;}
   th{text-align:left; color:var(--muted); font-weight:500; padding:10px 14px; font-size:11px; text-transform:uppercase; letter-spacing:.04em;}
   td{padding:9px 14px; border-top:1px solid var(--border);}
-  td.amt{font-family:var(--fuente-numeros),monospace; text-align:right;}
+  td.amt{font-family:'JetBrains Mono',monospace; text-align:right;}
   .tag{display:inline-block; padding:2px 8px; border-radius:20px; font-size:10.5px; background:var(--surface-2); color:var(--muted);}
   .tag-gasto{color:var(--red); background:rgba(240,101,78,.14);}
   .tag-ingreso{color:var(--green); background:rgba(74,222,148,.14);}
@@ -241,12 +241,12 @@
   label{font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; display:block; margin-bottom:5px;}
   input,select{
     width:100%; background:var(--surface-2); border:1px solid var(--border); border-radius:8px;
-    color:var(--text); padding:10px 12px; font-family:var(--fuente-cuerpo),sans-serif; font-size:13.5px;
+    color:var(--text); padding:10px 12px; font-family:'Plus Jakarta Sans',sans-serif; font-size:13.5px;
   }
   .field{margin-bottom:12px;}
   button{
     background:var(--blue); color:#0F1620; border:none; border-radius:8px; padding:11px 18px;
-    font-family:var(--fuente-cuerpo),sans-serif; font-weight:600; font-size:14px; cursor:pointer; width:100%;
+    font-family:'Plus Jakarta Sans',sans-serif; font-weight:600; font-size:14px; cursor:pointer; width:100%;
     margin-top:4px;
   }
   button:hover{opacity:.9;}
@@ -257,8 +257,6 @@
 
   footer{margin-top:48px; text-align:center; color:var(--muted); font-size:11px;}
 </style>
-<link rel="manifest" href="../manifest.json">
-<meta name="theme-color" content="#0F1620">
 </head>
 <body>
 <div class="wrap">
@@ -271,7 +269,6 @@
         <a href="index.html" class="link-cruzado" title="Volver a la vista clásica">← Clásica</a>
         <select id="selectorMes"></select>
         <button class="theme-toggle" id="btnExportar" title="Exportar reporte del mes" aria-label="Exportar reporte">🖨️</button>
-        <button class="theme-toggle" id="btnToken" title="Cambiar token de escritura" aria-label="Cambiar token de escritura">🔑</button>
         <button class="theme-toggle" id="themeToggle" title="Cambiar tema" aria-label="Cambiar tema claro/oscuro"></button>
       </div>
     </div>
@@ -374,7 +371,7 @@
   <section>
     <div class="section-title">Cuotas activas</div>
     <div class="conciliacion-card" id="cuotasCard">
-      <div style="color:var(--muted); font-size:12px;">Cargando…</div>
+      <div style="color:var(--muted); font-size:12px;">Aún no conectado. Publica la hoja <b>Cuotas_Activas</b> como CSV y pega el link en <code>CSV_CUOTAS</code> del código.</div>
     </div>
   </section>
 
@@ -389,6 +386,13 @@
     <div class="section-title">Piso mensual <span class="n">(según lo que marcaste)</span></div>
     <div class="piso-card" id="pisoCard">
       <div style="color:var(--muted); font-size:13px;">Marca líneas como Duro/Flexible en la tabla de Movimientos para ver esto.</div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-title">📅 Fijos pendientes de este mes <span class="n">(proyectado, aún no se registran)</span></div>
+    <div class="conciliacion-card" id="proyeccionCard">
+      <div style="color:var(--muted); font-size:13px;">Calculando…</div>
     </div>
   </section>
 
@@ -496,40 +500,13 @@
 </div>
 
 <script>
-// C2 cerrado: ya no se leen CSV publicados en la web. Los datos se piden
-// directo al Apps Script (acción "datosProtegidos"), protegidos con el mismo
-// token de escritura.
+const CSV_MOVIMIENTOS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRLfN2qjT0gT6YQloWSrSyJ4eJgZtF1LnCXEjDMZlOlwz_72G0L8lTHNOZmnepcCq3k2dvX7WJ5upLx/pub?gid=0&single=true&output=csv';
+const CSV_TOPES = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRLfN2qjT0gT6YQloWSrSyJ4eJgZtF1LnCXEjDMZlOlwz_72G0L8lTHNOZmnepcCq3k2dvX7WJ5upLx/pub?gid=1363525202&single=true&output=csv';
+const CSV_CONCILIACION = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRLfN2qjT0gT6YQloWSrSyJ4eJgZtF1LnCXEjDMZlOlwz_72G0L8lTHNOZmnepcCq3k2dvX7WJ5upLx/pub?gid=1313860211&single=true&output=csv';
+const CSV_CUOTAS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRLfN2qjT0gT6YQloWSrSyJ4eJgZtF1LnCXEjDMZlOlwz_72G0L8lTHNOZmnepcCq3k2dvX7WJ5upLx/pub?gid=2134012895&single=true&output=csv';
 const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbxvN2rvCP5jt7xWkcpEsHjokcMoUGFuWsNncUs26oqdAmfrTR_t-MtkYn8TsUz-9pVyjw/exec';
+const DASHBOARD_SECRET = 'scc-gastos-2026-x7f2';
 const META_INGRESO_MENSUAL = 2600000;
-
-// ---- Token de escritura: ya NO va escrito en el código. Se pide una vez y se
-// guarda solo en este navegador (localStorage) — mismo token que en index.html. ----
-const TOKEN_KEY = 'gastos_dashboard_token';
-function getToken(){
-  let t = localStorage.getItem(TOKEN_KEY);
-  if(!t){
-    t = prompt('Pega tu token de escritura de Gastos (se guarda solo en este navegador):');
-    if(t) localStorage.setItem(TOKEN_KEY, t.trim());
-  }
-  return localStorage.getItem(TOKEN_KEY) || '';
-}
-document.addEventListener('DOMContentLoaded', () => {
-  const btnToken = document.getElementById('btnToken');
-  if(btnToken){
-    btnToken.addEventListener('click', () => {
-      localStorage.removeItem(TOKEN_KEY);
-      getToken();
-    });
-  }
-});
-
-// Escapa texto antes de insertarlo como HTML, para que un movimiento con texto
-// malicioso en su descripción/comercio nunca pueda ejecutar código en el navegador.
-function esc(s){
-  return String(s == null ? '' : s)
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-}
 
 const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
@@ -577,19 +554,9 @@ function cssVar(nombre){
   return getComputedStyle(document.documentElement).getPropertyValue(nombre).trim();
 }
 
-// Pide movimientos, topes, conciliación y cuotas al Apps Script (protegido
-// con token) en una sola llamada, en vez de leer CSV públicos.
-function cargarDatosProtegidos(){
-  const token = getToken();
-  if(!token){
-    return Promise.reject(new Error('Falta el token de acceso.'));
-  }
-  return fetch(WEBAPP_URL, {
-    method:'POST',
-    body: JSON.stringify({ accion:'datosProtegidos', secreto: token })
-  }).then(r => r.json()).then(json => {
-    if(!json.ok) throw new Error(json.error || 'No se pudo cargar');
-    return json;
+function cargarCSV(url){
+  return new Promise((resolve) => {
+    Papa.parse(url, { download:true, header:true, skipEmptyLines:true, complete: r => resolve(r.data) });
   });
 }
 
@@ -626,11 +593,12 @@ function sparklineSVG(values, color){
 let chartTendencia, chartDona;
 let TOPES = {}, TIPOS_TOPE = {}, ICONOS_CAT = {}, MOVS = [];
 
-cargarDatosProtegidos().then(json => {
-  const movs = json.movimientos;
-  const topesRaw = json.topes;
-  const conciliacionData = json.conciliacion;
-  const cuotasData = json.cuotas;
+Promise.all([
+  cargarCSV(CSV_MOVIMIENTOS),
+  cargarCSV(CSV_TOPES),
+  CSV_CONCILIACION ? cargarCSV(CSV_CONCILIACION) : Promise.resolve([]),
+  CSV_CUOTAS ? cargarCSV(CSV_CUOTAS) : Promise.resolve([])
+]).then(([movs, topesRaw, conciliacionData, cuotasData]) => {
   topesRaw.forEach(r => {
     const cat = (r['Categoría']||'').trim();
     if(!cat) return;
@@ -655,6 +623,7 @@ cargarDatosProtegidos().then(json => {
   renderYTD(hoy.getFullYear(), hoy.getMonth());
   renderConciliacion(conciliacionData);
   renderPisoMensual();
+  renderProyeccion(hoy.getFullYear(), hoy.getMonth());
   renderCuotas(cuotasData);
   renderTermometro(hoy.getFullYear(), hoy.getMonth());
   renderHeatmap(hoy.getFullYear(), hoy.getMonth());
@@ -672,12 +641,13 @@ cargarDatosProtegidos().then(json => {
     renderYTD(Number(a), Number(mm));
     renderTermometro(Number(a), Number(mm));
     renderHeatmap(Number(a), Number(mm));
+    renderProyeccion(Number(a), Number(mm));
   });
 
   document.getElementById('selectorCategoriaTendencia').addEventListener('change', renderTendenciaCategoria);
 
 }).catch(err => {
-  document.getElementById('ledgerDuro').innerHTML = '<div style="color:var(--red); font-size:13px;">No se pudieron cargar los datos: ' + esc(err.message || '') + '</div>';
+  document.getElementById('ledger').innerHTML = '<div style="color:var(--red); font-size:13px;">No se pudieron cargar los datos. Revisa que el Sheet siga publicado.</div>';
   console.error(err);
 });
 
@@ -886,8 +856,8 @@ function renderMes(anio, mesIdx){
       <div class="ledger-row-top">
         <div class="ledger-left">
           <span class="signal" style="background:${color}"></span>
-          <span class="ledger-emoji">${esc(prefijoEmoji)}${esc(ICONOS_CAT[cat] || '📌')}</span>
-          <span class="ledger-name">${esc(cat)}</span>
+          <span class="ledger-emoji">${prefijoEmoji}${ICONOS_CAT[cat] || '📌'}</span>
+          <span class="ledger-name">${cat}</span>
         </div>
         <div class="ledger-right">
           <div class="ledger-amt-wrap">
@@ -1054,8 +1024,8 @@ function pintarTabla(lista, filtro){
     const idMov = m['ID'] || '';
     const fijoActual = (m['Tipo_Fijo']||'').trim();
     const selectId = 'fijo-' + idMov;
-    tr.innerHTML = `<td>${esc(m['Fecha'])}</td><td><span class="${claseTag}">${esc(tipo)}</span></td><td>${esc(catConEmoji)}</td><td>${esc(m['Comercio_Descripción'])}</td><td class="amt">${fmt(m._monto)}</td>
-      <td><select id="${esc(selectId)}" class="select-fijo" data-id="${esc(idMov)}">
+    tr.innerHTML = `<td>${m['Fecha']||''}</td><td><span class="${claseTag}">${tipo}</span></td><td>${catConEmoji}</td><td>${m['Comercio_Descripción']||''}</td><td class="amt">${fmt(m._monto)}</td>
+      <td><select id="${selectId}" class="select-fijo" data-id="${idMov}">
         <option value="" ${fijoActual===''?'selected':''}>—</option>
         <option value="Duro" ${fijoActual==='Duro'?'selected':''}>Duro</option>
         <option value="Flexible" ${fijoActual==='Flexible'?'selected':''}>Flexible</option>
@@ -1069,12 +1039,10 @@ function pintarTabla(lista, filtro){
 
 function guardarFijo_(id, tipoFijo, selectEl){
   if(!id){ return; }
-  const token = getToken();
-  if(!token){ return; }
   selectEl.disabled = true;
   fetch(WEBAPP_URL, {
     method:'POST',
-    body: JSON.stringify({ accion:'marcarFijo', secreto: token, id: id, tipoFijo: tipoFijo })
+    body: JSON.stringify({ accion:'marcarFijo', secreto: DASHBOARD_SECRET, id: id, tipoFijo: tipoFijo })
   }).then(r => r.json()).then(r => {
     selectEl.disabled = false;
     if(!r.ok){ alert('No se pudo guardar: ' + (r.error||'error')); }
@@ -1107,13 +1075,11 @@ function poblarFormulario(){
     if(!monto || Number(monto) <= 0){
       msg.textContent = 'Ingresa un monto válido.'; msg.className = 'form-msg err'; return;
     }
-    const token = getToken();
-    if(!token){ msg.textContent = 'Falta el token de escritura.'; msg.className = 'form-msg err'; return; }
     btn.disabled = true; msg.textContent = 'Registrando…'; msg.className = 'form-msg';
     fetch(WEBAPP_URL, {
       method:'POST',
       body: JSON.stringify({
-        accion:'registrar', secreto: token,
+        accion:'registrar', secreto: DASHBOARD_SECRET,
         tipo: fTipo.value, monto: monto,
         categoria: (fTipo.value==='Gasto'||fTipo.value==='Ahorro') ? fCategoria.value : '',
         cuenta: document.getElementById('fCuenta').value,
@@ -1153,10 +1119,11 @@ function renderYTD(anio, mesHasta){
 // ============ CONCILIACIÓN ============
 function renderConciliacion(datos){
   const cont = document.getElementById('conciliacionCard');
-  if(!datos || !datos.length){
-    cont.innerHTML = '<div style="color:var(--muted); font-size:12px;">Sin registros aún. Crea la hoja <b>Conciliacion_Historial</b> en tu Sheet de Gastos para ver esto.</div>';
+  if(!CSV_CONCILIACION){
+    cont.innerHTML = '<div style="color:var(--muted); font-size:12px;">Aún no conectado. Crea la hoja <b>Conciliacion_Historial</b>, publícala como CSV y pega el link en <code>CSV_CONCILIACION</code> del código.</div>';
     return;
   }
+  if(!datos || !datos.length){ cont.innerHTML = '<div style="color:var(--muted); font-size:12px;">Sin registros aún.</div>'; return; }
   const porBanco = {};
   datos.forEach(r => { porBanco[r['Banco']] = r; }); // se queda con el último de cada banco (asume orden cronológico)
   cont.innerHTML = '';
@@ -1165,7 +1132,7 @@ function renderConciliacion(datos){
     const color = pct >= 90 ? 'var(--green)' : (pct >= 70 ? 'var(--naranjo)' : 'var(--red)');
     const div = document.createElement('div');
     div.className = 'conc-banco';
-    div.innerHTML = `<div>${esc(r['Banco'])}<div class="conc-fecha">${esc(r['Fecha'])}</div></div><div class="conc-pct" style="color:${color}">${pct}%</div>`;
+    div.innerHTML = `<div>${r['Banco']}<div class="conc-fecha">${r['Fecha']}</div></div><div class="conc-pct" style="color:${color}">${pct}%</div>`;
     cont.appendChild(div);
   });
 }
@@ -1178,7 +1145,7 @@ function poblarEditorTopes(){
     const row = document.createElement('div');
     row.className = 'tope-row';
     row.innerHTML = `
-      <span>${esc(ICONOS_CAT[cat]||'')} ${esc(cat)}</span>
+      <span>${ICONOS_CAT[cat]||''} ${cat}</span>
       <input type="number" value="${TOPES[cat]}" id="tope-${cat.replace(/[^a-zA-Z0-9]/g,'')}">
       <button type="button">Guardar</button>
     `;
@@ -1202,12 +1169,10 @@ function guardarTope_(categoria, valor, btn){
     msg.textContent = '⚠️ El tope no puede superar $1.000.000 desde acá. Ajústalo directo en el Sheet si es un valor real más alto.';
     msg.style.color = 'var(--red)'; return;
   }
-  const token = getToken();
-  if(!token){ msg.textContent = 'Falta el token de escritura.'; msg.style.color = 'var(--red)'; return; }
   btn.disabled = true; msg.textContent = 'Guardando…'; msg.style.color = 'var(--muted)';
   fetch(WEBAPP_URL, {
     method:'POST',
-    body: JSON.stringify({ accion:'actualizarTope', secreto: token, categoria: categoria, nuevoTope: nuevoTope })
+    body: JSON.stringify({ accion:'actualizarTope', secreto: DASHBOARD_SECRET, categoria: categoria, nuevoTope: nuevoTope })
   }).then(r => r.json()).then(r => {
     btn.disabled = false;
     if(r.ok){
@@ -1393,10 +1358,8 @@ function renderHeatmap(anio, mesIdx){
 // ============ CUOTAS ACTIVAS ============
 function renderCuotas(datos){
   const cont = document.getElementById('cuotasCard');
-  if(!datos || !datos.length){
-    cont.innerHTML = '<div style="color:var(--muted); font-size:12px;">Sin cuotas activas registradas. Crea la hoja <b>Cuotas_Activas</b> en tu Sheet de Gastos para ver esto.</div>';
-    return;
-  }
+  if(!CSV_CUOTAS) return; // deja el mensaje de "aún no conectado" que ya está en el HTML
+  if(!datos.length){ cont.innerHTML = '<div style="color:var(--muted); font-size:12px;">Sin cuotas activas registradas.</div>'; return; }
   cont.innerHTML = '';
   datos.forEach(r => {
     const actual = Number(r['Cuota_Actual']) || 0;
@@ -1404,17 +1367,60 @@ function renderCuotas(datos){
     const pct = Math.min(100, Math.round(actual/total*100));
     const div = document.createElement('div');
     div.className = 'conc-banco';
-    div.innerHTML = `<div>${esc(r['Comercio'])}<div class="conc-fecha">Cuota ${actual}/${total} · ${fmt(r['Valor_Mensual'])}/mes</div></div><div class="conc-pct" style="color:var(--blue)">${pct}%</div>`;
+    div.innerHTML = `<div>${r['Comercio']||''}<div class="conc-fecha">Cuota ${actual}/${total} · ${fmt(r['Valor_Mensual'])}/mes</div></div><div class="conc-pct" style="color:var(--blue)">${pct}%</div>`;
     cont.appendChild(div);
   });
 }
-</script>
-<script>
-  if('serviceWorker' in navigator){
-    window.addEventListener('load', function(){
-      navigator.serviceWorker.register('../sw.js').catch(function(){});
+
+// ============ GASTOS FIJOS PROYECTADOS PENDIENTES ============
+function renderProyeccion(anio, mesIdx){
+  const cont = document.getElementById('proyeccionCard');
+  const actual = totalesDeMes(anio, mesIdx);
+
+  // Reconstruye el historial de Duro por categoría en los meses ANTERIORES al seleccionado
+  const historialPorCat = {};
+  for(let m=0; m<mesIdx; m++){
+    const tm = totalesDeMes(anio, m);
+    Object.keys(tm.totalesDuroCat).forEach(cat => {
+      if(tm.totalesDuroCat[cat] > 0){
+        if(!historialPorCat[cat]) historialPorCat[cat] = [];
+        historialPorCat[cat].push(tm.totalesDuroCat[cat]);
+      }
     });
   }
+
+  const pendientes = [];
+  Object.keys(historialPorCat).forEach(cat => {
+    const historial = historialPorCat[cat];
+    if(historial.length < 2) return; // necesitamos al menos 2 meses de patrón para confiar en la proyección
+    const promedio = historial.reduce((a,b)=>a+b,0) / historial.length;
+    const yaRegistrado = actual.totalesDuroCat[cat] || 0;
+    // Si lo registrado este mes es muy inferior al promedio histórico, lo consideramos "aún pendiente de llegar"
+    if(yaRegistrado < promedio * 0.3){
+      pendientes.push({ cat, promedio, faltante: promedio - yaRegistrado });
+    }
+  });
+
+  if(pendientes.length === 0){
+    cont.innerHTML = '<div style="color:var(--muted); font-size:12px;">No hay gastos fijos recurrentes pendientes de proyectar — o aún falta más historial marcado como Duro (mínimo 2 meses) para detectar el patrón.</div>';
+    return;
+  }
+
+  pendientes.sort((a,b) => b.promedio - a.promedio);
+  let html = '';
+  pendientes.forEach(p => {
+    html += `<div class="conc-banco">
+      <div>${ICONOS_CAT[p.cat] || '📌'} ${p.cat}<div class="conc-fecha">Aún no se registra este mes · promedio histórico ${fmt(p.promedio)}</div></div>
+      <div class="conc-pct" style="color:var(--naranjo)">~${fmt(p.promedio)}</div>
+    </div>`;
+  });
+  const totalProyectado = pendientes.reduce((a,p) => a + p.faltante, 0);
+  html += `<div class="ledger-row-top" style="margin-top:10px; padding-top:10px; border-top:1px solid var(--border);">
+      <b>Total proyectado por llegar</b><b class="mono" style="color:var(--naranjo)">${fmt(totalProyectado)}</b>
+    </div>
+    <div style="color:var(--muted); font-size:10.5px; margin-top:8px;">Estimado según tu promedio histórico — no es un gasto real hasta que se registre.</div>`;
+  cont.innerHTML = html;
+}
 </script>
 </body>
 </html>
