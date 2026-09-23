@@ -134,6 +134,8 @@
   .msg.err{color:var(--red);}
   .msg.ok{color:var(--green);}
 </style>
+<link rel="manifest" href="../manifest.json">
+<meta name="theme-color" content="#0F1620">
 </head>
 <body>
   <header>
@@ -448,6 +450,13 @@ btnGuardarAgregar.addEventListener('click', async () => {
 });
 
 cargarDatos();
+</script>
+<script>
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', function(){
+      navigator.serviceWorker.register('../sw.js').catch(function(){});
+    });
+  }
 </script>
 </body>
 </html>
