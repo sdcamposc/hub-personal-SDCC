@@ -2,29 +2,40 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <link rel="apple-touch-icon" href="../icono-hub-180.png">
-<title>Panel de inversiones — Hub personal</title>
+<title>Inversiones — Hub personal</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../hub.css">
 <script>
+  // Mismo tema (claro/oscuro) que el resto del hub
   (function(){
     var guardado = localStorage.getItem('tema-dashboard') || 'dark';
     document.documentElement.setAttribute('data-theme', guardado);
   })();
 </script>
 <style>
-  :root{ --bg:#0F1620; --surface:#172230; --surface-2:#1E2B3B; --border:#2A3A4D; --text:#EDEFF2; --muted:#8A97A6; --blue:#6C8EEF; }
-  :root[data-theme="light"]{ --bg:#FAF7F2; --surface:#FFFFFF; --surface-2:#F1ECE3; --border:#E4DDD0; --text:#2B2621; --muted:#8C8072; --blue:#3F63D1; }
+  :root{
+    --bg:#0F1620; --surface:#172230; --surface-2:#1E2B3B; --border:#2A3A4D;
+    --text:#EDEFF2; --muted:#8A97A6; --green:#4ADE94; --blue:#6C8EEF; --neg:#F87171;
+    --on-accent:#0F1620;
+  }
+  :root[data-theme="light"]{
+    --bg:#FAF7F2; --surface:#FFFFFF; --surface-2:#F1ECE3; --border:#E4DDD0;
+    --text:#2B2621; --muted:#8C8072; --green:#1FA967; --blue:#3F63D1; --neg:#D64545;
+    --on-accent:#FFFFFF;
+  }
   *{box-sizing:border-box;margin:0;padding:0;}
+  [hidden]{display:none !important;}
   body{
     font-family:var(--fuente-cuerpo),-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    background:var(--bg); color:var(--text); min-height:100vh; line-height:1.5; padding:24px 16px 32px;
+    background:var(--bg); color:var(--text); min-height:100vh; line-height:1.5;
+    padding:24px 16px 56px; transition:background .2s ease,color .2s ease;
   }
   h1,h2,h3{font-family:var(--fuente-titulo);}
-  .contenedor{max-width:1300px;margin:0 auto;}
+  .contenedor{max-width:980px;margin:0 auto;}
   .theme-toggle{
     position:fixed; top:16px; right:16px; width:38px; height:38px; border-radius:20px;
     border:1px solid var(--border); background:var(--surface-2); color:var(--text);
@@ -32,28 +43,88 @@
   }
   .theme-toggle svg{width:17px;height:17px;}
   :focus-visible{outline:2px solid var(--blue);outline-offset:2px;}
-  .top{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin:8px 52px 16px 0;}
-  .top h1{font-size:22px;font-weight:700;letter-spacing:-0.02em;}
+
+  .top{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin:8px 52px 20px 0;}
+  .top h1{font-size:24px;font-weight:700;letter-spacing:-0.02em;}
   .top p{color:var(--muted);font-size:14px;}
   .acciones{display:flex;flex-wrap:wrap;gap:8px;}
   a.btn,button.btn{
     font:inherit;font-size:13px;font-weight:600;cursor:pointer;text-decoration:none;
-    padding:8px 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);display:inline-block;
+    padding:8px 14px;border-radius:10px;border:1px solid var(--border);
+    background:var(--surface);color:var(--text);display:inline-block;
   }
   a.btn:hover,button.btn:hover{border-color:var(--blue);}
-  .marco{
-    position:relative;background:var(--surface);border:1px solid var(--border);border-radius:16px;
-    overflow:hidden;height:calc(100vh - 170px);min-height:520px;
+  button.principal{background:var(--blue);border-color:var(--blue);color:var(--on-accent);padding:11px 20px;font-size:14px;}
+  button:disabled{opacity:.6;cursor:progress;}
+
+  section.caja{
+    background:var(--surface);border:1px solid var(--border);border-radius:16px;
+    padding:20px;margin-bottom:16px;
   }
-  .marco iframe{width:100%;height:100%;border:0;display:block;}
-  .marco.oculto iframe{filter:blur(12px);pointer-events:none;}
-  .aviso{
-    position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
-    gap:8px;padding:24px;text-align:center;color:var(--muted);pointer-events:none;
+  h2{font-size:17px;font-weight:600;margin-bottom:12px;}
+  h2 small{font-weight:500;color:var(--muted);font-size:12px;margin-left:6px;}
+  .nota{color:var(--muted);font-size:13px;}
+  .msg{min-height:1.4em;margin-top:10px;font-size:14px;}
+  .msg.error{color:var(--neg);} .msg.ok{color:var(--green);}
+  .pos{color:var(--green);} .neg{color:var(--neg);}
+
+  /* ---- Conexión ---- */
+  .conexion{max-width:520px;margin:40px auto;}
+  .conexion p{color:var(--muted);font-size:14px;margin-bottom:14px;}
+  label{display:block;font-size:13px;color:var(--muted);margin:12px 0 4px;}
+  input[type=text],input[type=password],input[type=date]{
+    width:100%;padding:11px 12px;border-radius:10px;border:1px solid var(--border);
+    background:var(--surface-2);color:var(--text);font:inherit;font-size:15px;
   }
-  .aviso.oculto{display:none;}
-  .pie{margin-top:12px;color:var(--muted);font-size:12.5px;}
+  .check{display:flex;gap:8px;align-items:center;margin:14px 0;color:var(--text);font-size:14px;}
+  .check input{width:auto;}
+
+  /* ---- Guía ---- */
+  details.guia summary{cursor:pointer;font-size:17px;font-weight:600;}
+  details.guia[open] summary{margin-bottom:12px;}
+  .guia h3{font-size:15px;font-weight:700;margin:18px 0 6px;}
+  .guia p,.guia li{font-size:14px;color:var(--text);}
+  .guia ul,.guia ol{margin:6px 0 6px 22px;}
+  .guia li{margin:4px 0;}
+  .guia table{width:100%;border-collapse:collapse;margin:8px 0;font-size:13.5px;}
+  .guia th,.guia td{border:1px solid var(--border);padding:8px 10px;text-align:left;vertical-align:top;}
+  .guia th{background:var(--surface-2);}
+  .guia .ejemplo{background:var(--surface-2);border-left:3px solid var(--blue);padding:10px 14px;border-radius:8px;margin:10px 0;font-size:14px;}
+  .guia code{background:var(--surface-2);padding:1px 6px;border-radius:5px;font-size:13px;}
+
+  /* ---- KPIs ---- */
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;}
+  .kpi{background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;}
+  .kpi span{display:block;color:var(--muted);font-size:12.5px;}
+  .kpi strong{font-size:19px;font-weight:700;font-variant-numeric:tabular-nums;font-family:var(--fuente-numeros);}
+
+  /* ---- Gráfico ---- */
+  #grafico-wrap{overflow-x:auto;padding-bottom:6px;}
+  #grafico{display:block;}
+  #grafico text{font-family:inherit;}
+
+  /* ---- Tabla ---- */
+  .tabla-wrap{overflow-x:auto;}
+  table.datos{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums;}
+  table.datos th,table.datos td{padding:10px;text-align:right;border-bottom:1px solid var(--border);white-space:nowrap;}
+  table.datos th:first-child,table.datos td:first-child{text-align:left;white-space:normal;}
+  table.datos th{color:var(--muted);font-weight:600;font-size:12.5px;}
+  table.datos tfoot td{font-weight:700;border-top:2px solid var(--border);border-bottom:none;background:var(--surface-2);}
+  .barra{height:5px;background:var(--border);border-radius:3px;margin-top:5px;min-width:80px;}
+  .barra i{display:block;height:100%;background:var(--blue);border-radius:3px;}
+
+  /* ---- Formulario ---- */
+  .grid-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:4px 14px;margin-bottom:10px;}
+  .bloque-form{margin:16px 0 4px;font-weight:600;font-size:14px;}
+  details.aporte{margin:14px 0;border:1px solid var(--border);border-radius:12px;padding:12px 14px;}
+  details.aporte summary{cursor:pointer;font-weight:600;font-size:14px;color:var(--blue);}
+  .vista-previa{padding:12px 14px;border:1px dashed var(--border);border-radius:10px;margin:14px 0;font-size:14px;}
+
+  #vista-app.oculta{filter:blur(9px);pointer-events:none;user-select:none;}
+  footer{margin-top:28px;font-size:12px;color:var(--muted);text-align:center;}
 </style>
+<link rel="manifest" href="../manifest.json">
+<meta name="theme-color" content="#0F1620">
 </head>
 <body>
 <button class="theme-toggle" id="theme-toggle" aria-label="Cambiar tema"></button>
@@ -61,58 +132,471 @@
 <div class="contenedor">
   <div class="top">
     <div>
-      <h1>📊 Panel de inversiones <span style="color:var(--muted);font-weight:500;font-size:14px">· 🔒 privado</span></h1>
-      <p>Reporte de Looker Studio conectado a tu planilla.</p>
+      <h1>📈 Inversiones <span class="nota">· 🔒 privado</span></h1>
+      <p>Resumen del portafolio y registro semanal, conectado a tu planilla.</p>
     </div>
     <div class="acciones">
-      <a class="btn" href="./">‹ Registro</a>
-      <a class="btn" href="../">Hub</a>
-      <button class="btn" id="btn-ocultar" type="button">Ocultar montos</button>
-      <a class="btn" id="btn-sheet" href="#" target="_blank" rel="noopener">Abrir planilla</a>
-      <a class="btn" id="btn-looker" href="#" target="_blank" rel="noopener">Abrir en Looker Studio</a>
+      <a class="btn" href="../">‹ Hub</a>
+      <a class="btn" href="panel.html">Panel Looker</a>
+      <button class="btn" id="btn-ocultar" type="button" hidden>Ocultar montos</button>
+      <button class="btn" id="btn-salir" type="button" hidden>Cerrar sesión</button>
     </div>
   </div>
 
-  <div class="marco" id="marco">
-    <iframe id="panel" title="Panel de inversiones en Looker Studio" loading="lazy" allowfullscreen></iframe>
-    <div class="aviso" id="aviso">
-      <strong>Cargando el panel…</strong>
-      <span>Si no aparece, inicia sesión en Google con tu cuenta en este navegador, o usa "Abrir en Looker Studio".</span>
-    </div>
+  <!-- ===== CONEXIÓN (solo la primera vez en cada dispositivo) ===== -->
+  <section class="caja conexion" id="vista-conexion">
+    <h2>Conectar con tu planilla</h2>
+    <p>Solo la primera vez en este dispositivo. Después, la página entra sola.</p>
+    <label for="url">URL del puente (Apps Script, termina en /exec)</label>
+    <input id="url" type="text" inputmode="url" autocomplete="off" placeholder="https://script.google.com/macros/s/.../exec">
+    <label for="token">Token</label>
+    <input id="token" type="password" autocomplete="current-password" placeholder="Pega tu token">
+    <label class="check"><input type="checkbox" id="recordar" checked> Recordar en este dispositivo (recomendado en tu equipo personal)</label>
+    <button class="btn principal" id="btn-conectar" type="button">Conectar</button>
+    <div class="msg" id="msg-conexion" role="status"></div>
+    <p class="nota" style="margin-top:12px">El token y la URL se guardan solo en este navegador. No están en el sitio ni en el repositorio.</p>
+  </section>
+
+  <!-- ===== APP ===== -->
+  <div id="vista-app" hidden>
+
+    <!-- Guía -->
+    <section class="caja">
+      <details class="guia" id="guia" open>
+        <summary>📖 Guía de uso (léela la primera vez; puedes cerrarla)</summary>
+
+        <h3>¿Qué es esta página?</h3>
+        <p>Es tu panel privado de inversiones. Arriba ves cómo va tu portafolio y abajo registras, cada semana, lo que muestran tus apps. Todo se guarda en tu planilla <strong>Panel_Inversiones_v2</strong> de Google Drive: esta página solo la lee y le agrega filas.</p>
+
+        <h3>¿Cuándo registrar?</h3>
+        <ul>
+          <li>Una vez por semana, idealmente los <strong>lunes</strong>, siempre a la misma hora del día para que las semanas sean comparables.</li>
+          <li>La fecha debe ser <strong>posterior al último registro</strong>. No se puede repetir una fecha ni registrar hacia atrás, ni en el futuro.</li>
+          <li>Si un lunes no alcanzas, registra en cuanto puedas; no pasa nada.</li>
+        </ul>
+
+        <h3>Paso a paso para registrar una semana</h3>
+        <ol>
+          <li><strong>Abre cada app</strong> (Fintual, BCI, Santander, APV) y anota el saldo total que muestra hoy.</li>
+          <li>Ve al final de esta página, a <strong>"Registrar semana"</strong>. La fecha ya viene con la de hoy.</li>
+          <li>En <strong>"Saldo actual"</strong> escribe, para cada plataforma, el saldo <em>tal como lo ves en la app</em>, en pesos. Puedes escribirlo con o sin puntos. Bajo cada campo aparece el saldo de la semana anterior como referencia.</li>
+          <li>Si esta semana <strong>depositaste dinero nuevo</strong>, abre <strong>"Hice un aporte nuevo esta semana"</strong> y escribe <em>solo el monto depositado</em>, en la plataforma que corresponde. Si no depositaste nada, no toques esa sección.</li>
+          <li>Revisa el recuadro <strong>"Vista previa"</strong>: muestra el total, la variación bruta, tus aportes y la variación real estimada.</li>
+          <li>Presiona <strong>"Guardar en la planilla"</strong> y confirma. Verás un mensaje verde y todos los números de la página se actualizan.</li>
+        </ol>
+
+        <h3>Saldo vs. aporte: la regla</h3>
+        <table>
+          <tr><th>Campo</th><th>Qué escribes</th></tr>
+          <tr><td><strong>Saldo actual</strong></td><td>Lo que muestra la app hoy, <em>ya incluyendo</em> cualquier depósito que hayas hecho.</td></tr>
+          <tr><td><strong>Aporte</strong></td><td>Solo lo que tú depositaste esta semana, en el fondo que corresponde. Vacío si no depositaste.</td></tr>
+        </table>
+        <div class="ejemplo">
+          <strong>Ejemplo:</strong> tu fondo PROXY mostraba $409.657 la semana pasada. Esta semana depositas $100.000 y hoy la app muestra $511.657.<br>
+          Escribes: <strong>Saldo PROXY = 511657</strong> y <strong>Aporte PROXY = 100000</strong>.<br>
+          La planilla calcula sola que el mercado ganó $2.000 (511.657 − 409.657 − 100.000).<br>
+          <strong>Nunca sumes tú el aporte al saldo:</strong> ya viene incluido en lo que muestra la app.
+        </div>
+
+        <h3>Qué significa cada número</h3>
+        <table>
+          <tr><th>Número</th><th>Significado</th></tr>
+          <tr><td>Total hoy</td><td>Suma de los saldos del último registro.</td></tr>
+          <tr><td>Total invertido</td><td>Lo que has puesto tú: inversión inicial + todos los aportes registrados (hoja COSTO_BASE).</td></tr>
+          <tr><td>Ganancia real (costo base)</td><td>Total hoy − Total invertido. Solo es confiable si el costo base inicial de la planilla está correcto.</td></tr>
+          <tr><td>Desde [fecha del primer registro]</td><td>Lo que ganó o perdió el mercado desde tu primer registro, descontando los aportes posteriores. No depende del costo base histórico, por eso es el indicador más limpio para seguir semana a semana.</td></tr>
+          <tr><td>% del portafolio</td><td>Peso de cada plataforma sobre el total (su saldo ÷ total hoy).</td></tr>
+          <tr><td>Retorno (tabla)</td><td>Ganancia ÷ invertido de esa plataforma.</td></tr>
+          <tr><td>Gráfico</td><td>Cada punto es un registro, con su monto en pesos. El eje vertical <strong>no parte de cero</strong>: guíate por los montos, no por la altura de la línea.</td></tr>
+        </table>
+
+        <h3>Mensajes que puedes ver</h3>
+        <table>
+          <tr><th>Mensaje</th><th>Qué hacer</th></tr>
+          <tr><td>Ya existe un registro para AAAA-MM-DD</td><td>Esa fecha ya se guardó. Para corregirla, mira la sección de abajo.</td></tr>
+          <tr><td>La fecha debe ser posterior al último registro</td><td>Elige una fecha más nueva que la última registrada.</td></tr>
+          <tr><td>La fecha no puede ser futura</td><td>Usa la fecha de hoy o anterior (posterior al último registro).</td></tr>
+          <tr><td>Token inválido</td><td>El token está mal copiado o fue regenerado. Usa "Cerrar sesión" y vuelve a conectar con el token correcto.</td></tr>
+          <tr><td>Demasiados intentos</td><td>Hubo varios intentos fallidos seguidos. Espera 10 minutos.</td></tr>
+          <tr><td>La tabla de aportes de COSTO_BASE está llena</td><td>Se ocuparon las 20 filas de aportes. Hay que ampliar el rango en la planilla.</td></tr>
+          <tr><td>No pude conectar…</td><td>Revisa tu internet y que la URL del puente sea la correcta.</td></tr>
+        </table>
+
+        <h3>Me equivoqué en un registro: ¿cómo lo corrijo?</h3>
+        <p>Esta página solo <em>agrega</em> registros; no edita los existentes. Para corregir uno:</p>
+        <ol>
+          <li>Abre la planilla y ve a la hoja <code>REGISTRO_SEMANAL</code>.</li>
+          <li>Selecciona las columnas <strong>B a L</strong> de la fila equivocada (no toques A, M, N ni O, que tienen fórmulas) y presiona <strong>Suprimir</strong>.</li>
+          <li>Si ese registro incluía un aporte, en <code>COSTO_BASE</code> borra también su fila en la tabla de aportes (columnas B a E).</li>
+          <li>Vuelve aquí y registra la semana de nuevo.</li>
+        </ol>
+
+        <h3>Privacidad</h3>
+        <ul>
+          <li>El token y la URL quedan guardados <strong>solo en este navegador</strong> de este dispositivo. No están en el sitio ni en el repositorio.</li>
+          <li>Antes de mostrar tu pantalla a alguien, usa <strong>"Ocultar montos"</strong> (arriba a la derecha).</li>
+          <li>En un computador que no es tuyo, desmarca "Recordar" al conectar, o usa <strong>"Cerrar sesión"</strong> al terminar: borra el token y la URL de ese navegador.</li>
+        </ul>
+      </details>
+    </section>
+
+    <section class="caja">
+      <h2>Estado del portafolio <small id="ult-fecha"></small></h2>
+      <div class="kpis" id="kpis"></div>
+    </section>
+
+    <section class="caja">
+      <h2>Evolución del total <small>montos en CLP por fecha de registro</small></h2>
+      <div id="grafico-wrap"><svg id="grafico" role="img" aria-label="Evolución del total del portafolio por fecha, con el monto de cada registro"></svg></div>
+      <p class="nota" id="nota-grafico"></p>
+    </section>
+
+    <section class="caja">
+      <h2>Detalle por plataforma</h2>
+      <div class="tabla-wrap">
+        <table class="datos">
+          <thead>
+            <tr><th>Plataforma</th><th>Saldo</th><th>% del portafolio</th><th>Invertido</th><th>Ganancia</th><th>Retorno</th></tr>
+          </thead>
+          <tbody id="detalle"></tbody>
+          <tfoot id="detalle-total"></tfoot>
+        </table>
+      </div>
+    </section>
+
+    <section class="caja">
+      <h2>Registrar semana</h2>
+      <div style="max-width:240px">
+        <label for="fecha">Fecha del registro</label>
+        <input type="date" id="fecha">
+      </div>
+      <p class="nota" id="nota-fecha" style="margin-top:6px"></p>
+
+      <p class="bloque-form">1 · Saldo actual de cada plataforma</p>
+      <p class="nota">Lo que muestra cada app hoy, en pesos, <strong>ya incluyendo</strong> cualquier depósito de esta semana.</p>
+      <div class="grid-form" id="campos-saldos"></div>
+
+      <details class="aporte">
+        <summary>2 · Hice un aporte nuevo esta semana (opcional)</summary>
+        <p class="nota" style="margin-top:8px">Escribe <strong>solo lo que depositaste</strong>, en la plataforma correspondiente. Déjalo vacío si no depositaste. Se anota automáticamente en COSTO_BASE: no lo registres dos veces.</p>
+        <div class="grid-form" id="campos-aportes"></div>
+      </details>
+
+      <p class="bloque-form">3 · Revisa y guarda</p>
+      <div class="vista-previa" id="vista-previa">Completa los saldos para ver la variación real.</div>
+      <button class="btn principal" id="btn-guardar" type="button">Guardar en la planilla</button>
+      <div class="msg" id="msg-guardar" role="status"></div>
+    </section>
   </div>
-  <p class="pie">Solo tu cuenta de Google puede ver este reporte. Si aquí aparece en blanco (a veces pasa en el celular), el botón "Abrir en Looker Studio" siempre funciona.</p>
+
+  <footer>Datos vivos desde Google Sheets · acceso protegido con token</footer>
 </div>
 
 <script>
+  // ===== CONFIGURACIÓN =====
+  // Deja vacío: la URL del puente se ingresa una vez en tu navegador y no queda en el repositorio.
+  const URL_POR_DEFECTO = "";
+  // =========================
+
+  const CLP = new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 });
+  const NUM = new Intl.NumberFormat("es-CL", { maximumFractionDigits: 0 });
+  const PCT = new Intl.NumberFormat("es-CL", { style: "percent", minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  const $ = id => document.getElementById(id);
+
+  const K_URL = "inv_url", K_TOKEN = "inv_token";
+  let urlPuente = "", token = "", datos = null;
+
+  // ---------- tema (igual que el hub) ----------
   var ICONO_SOL = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="10" cy="10" r="3.4"/><path d="M10 2v2M10 16v2M18 10h-2M4 10H2M15.5 4.5l-1.4 1.4M5.9 14.1l-1.4 1.4M15.5 15.5l-1.4-1.4M5.9 5.9L4.5 4.5"/></svg>';
   var ICONO_LUNA = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M16.5 12.3A7 7 0 018 3.5a7 7 0 106.9 8.8 6.9 6.9 0 011.6 0z"/></svg>';
-  var btnTema = document.getElementById('theme-toggle');
-  function aplicarTema(t){
-    document.documentElement.setAttribute('data-theme', t);
-    btnTema.innerHTML = t === 'light' ? ICONO_LUNA : ICONO_SOL;
-    localStorage.setItem('tema-dashboard', t);
+  function aplicarTema(t) {
+    document.documentElement.setAttribute("data-theme", t);
+    $("theme-toggle").innerHTML = t === "light" ? ICONO_LUNA : ICONO_SOL;
+    localStorage.setItem("tema-dashboard", t);
+    if (datos) graficar(datos.serie || []);
   }
-  aplicarTema(document.documentElement.getAttribute('data-theme') || 'dark');
-  btnTema.addEventListener('click', function(){
-    aplicarTema((document.documentElement.getAttribute('data-theme') || 'dark') === 'light' ? 'dark' : 'light');
+  aplicarTema(document.documentElement.getAttribute("data-theme") || "dark");
+  $("theme-toggle").addEventListener("click", () =>
+    aplicarTema((document.documentElement.getAttribute("data-theme") || "dark") === "light" ? "dark" : "light"));
+
+  // ---------- utilidades ----------
+  const signo = n => (n > 0 ? "+" : n < 0 ? "−" : "");
+  const clp = n => signo(n) + CLP.format(Math.abs(n));
+  const pct = n => signo(n) + PCT.format(Math.abs(n));
+  const clase = n => (n > 0 ? "pos" : n < 0 ? "neg" : "");
+  const num = v => Number(String(v).replace(/[^\d]/g, "")) || 0;
+  const suma = a => a.reduce((s, x) => s + (Number(x) || 0), 0);
+  const pad = n => String(n).padStart(2, "0");
+  const hoyLocal = () => { const d = new Date(); return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); };
+  const fechaCorta = iso => iso.slice(8, 10) + "/" + iso.slice(5, 7) + "/" + iso.slice(2, 4);
+  const fechaLarga = iso => iso.slice(8, 10) + "-" + iso.slice(5, 7) + "-" + iso.slice(0, 4);
+  function diaSiguiente(iso) {
+    const [y, m, d] = iso.split("-").map(Number);
+    const n = new Date(y, m - 1, d + 1);
+    return n.getFullYear() + "-" + pad(n.getMonth() + 1) + "-" + pad(n.getDate());
+  }
+  function msg(id, texto, tipo) { const el = $(id); el.textContent = texto || ""; el.className = "msg " + (tipo || ""); }
+
+  // ---------- almacenamiento (token y URL solo en este navegador) ----------
+  function leer(k) { try { return localStorage.getItem(k) || sessionStorage.getItem(k) || ""; } catch (e) { return ""; } }
+  function guardarConexion(recordar) {
+    try {
+      const uso = recordar ? localStorage : sessionStorage, otro = recordar ? sessionStorage : localStorage;
+      uso.setItem(K_URL, urlPuente); uso.setItem(K_TOKEN, token);
+      otro.removeItem(K_URL); otro.removeItem(K_TOKEN);
+    } catch (e) {}
+  }
+  function borrarConexion(soloToken) {
+    try {
+      [localStorage, sessionStorage].forEach(s => { s.removeItem(K_TOKEN); if (!soloToken) s.removeItem(K_URL); });
+    } catch (e) {}
+  }
+  function urlValida(u) { return /^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(u); }
+
+  // ---------- comunicación con el puente ----------
+  async function llamar(accion, extra) {
+    // Texto plano: evita el preflight CORS que Apps Script no responde
+    let res;
+    try {
+      res = await fetch(urlPuente, { method: "POST", body: JSON.stringify(Object.assign({ accion, token }, extra)) });
+    } catch (e) {
+      throw new Error("No pude conectar con el puente. Revisa tu internet y que la URL sea la correcta.");
+    }
+    let json;
+    try { json = await res.json(); } catch (e) { throw new Error("El puente respondió algo inesperado. Revisa la URL y que la implementación sea 'Cualquier persona'."); }
+    if (!json.ok) throw new Error(json.error || "Error desconocido");
+    return json;
+  }
+
+  // ---------- conexión ----------
+  function mostrarConexion() {
+    $("vista-app").hidden = true; $("vista-conexion").hidden = false;
+    $("btn-ocultar").hidden = true; $("btn-salir").hidden = true;
+  }
+  async function conectar(auto) {
+    if (!auto) {
+      urlPuente = $("url").value.trim(); token = $("token").value.trim();
+    }
+    if (!urlValida(urlPuente)) { mostrarConexion(); msg("msg-conexion", "La URL debe ser la del Web App: https://script.google.com/macros/s/…/exec", "error"); return; }
+    if (!token) { mostrarConexion(); msg("msg-conexion", "Ingresa tu token.", "error"); return; }
+    $("btn-conectar").disabled = true;
+    msg("msg-conexion", "Conectando…");
+    try {
+      const r = await llamar("resumen");
+      if (!auto) guardarConexion($("recordar").checked);
+      msg("msg-conexion", "");
+      abrirApp(r);
+    } catch (e) {
+      mostrarConexion();
+      $("url").value = urlPuente;
+      if (/Token inv/i.test(e.message)) { borrarConexion(true); token = ""; }
+      msg("msg-conexion", e.message, "error");
+    } finally { $("btn-conectar").disabled = false; }
+  }
+  function abrirApp(r) {
+    $("vista-conexion").hidden = true; $("vista-app").hidden = false;
+    $("btn-ocultar").hidden = false; $("btn-salir").hidden = false;
+    pintar(r);
+  }
+  function cerrarSesion() {
+    borrarConexion(false); datos = null; token = ""; urlPuente = "";
+    $("token").value = ""; $("url").value = "";
+    ["kpis", "detalle", "detalle-total", "campos-saldos", "campos-aportes"].forEach(id => $(id).replaceChildren());
+    $("grafico").replaceChildren();
+    $("vista-app").classList.remove("oculta"); $("btn-ocultar").textContent = "Ocultar montos";
+    mostrarConexion();
+    msg("msg-conexion", "Sesión cerrada: el token y la URL se borraron de este navegador.", "ok");
+  }
+
+  // ---------- pintar ----------
+  function celda(tr, texto, cls) { const td = document.createElement("td"); td.textContent = texto; if (cls) td.className = cls; tr.appendChild(td); return td; }
+
+  function pintar(r) {
+    datos = r;
+    // KPIs
+    const k = r.kpi, kp = $("kpis"); kp.replaceChildren();
+    const tarjetas = k ? [
+      ["Total hoy", CLP.format(k.total), ""],
+      ["Total invertido", CLP.format(k.invertido), ""],
+      ["Ganancia real (costo base)", clp(k.ganancia) + " · " + pct(k.retorno), clase(k.ganancia)],
+      ["Desde " + fechaLarga(k.desdeSeguimiento.fechaInicio), clp(k.desdeSeguimiento.ganancia) + " · " + pct(k.desdeSeguimiento.retorno), clase(k.desdeSeguimiento.ganancia)],
+      ["Semanas registradas", String(k.semanas), ""]
+    ] : [["Sin registros todavía", "Registra tu primera semana abajo", ""]];
+    tarjetas.forEach(([t, v, c]) => {
+      const d = document.createElement("div"); d.className = "kpi";
+      const s = document.createElement("span"); s.textContent = t;
+      const b = document.createElement("strong"); b.textContent = v; if (c) b.className = c;
+      d.append(s, b); kp.appendChild(d);
+    });
+    $("ult-fecha").textContent = r.ultima ? "· último registro " + fechaLarga(r.ultima.fecha) : "";
+
+    pintarDetalle(r.detalle || []);
+    graficar(r.serie || []);
+    construirFormulario(r);
+  }
+
+  function pintarDetalle(det) {
+    const tb = $("detalle"), tf = $("detalle-total");
+    tb.replaceChildren(); tf.replaceChildren();
+    const totSaldo = suma(det.map(x => x.saldo)), totInv = suma(det.map(x => x.invertido)), totGan = totSaldo - totInv;
+    det.forEach(x => {
+      const tr = document.createElement("tr");
+      celda(tr, x.plataforma);
+      celda(tr, CLP.format(x.saldo));
+      const peso = totSaldo ? x.saldo / totSaldo : 0;
+      const td = document.createElement("td");
+      const t = document.createElement("span"); t.textContent = PCT.format(peso);
+      const b = document.createElement("div"); b.className = "barra";
+      const i = document.createElement("i"); i.style.width = Math.max(0, Math.min(100, peso * 100)) + "%";
+      b.appendChild(i); td.append(t, b); tr.appendChild(td);
+      celda(tr, CLP.format(x.invertido));
+      celda(tr, clp(x.ganancia), clase(x.ganancia));
+      celda(tr, pct(x.retorno), clase(x.ganancia));
+      tb.appendChild(tr);
+    });
+    if (det.length) {
+      const tr = document.createElement("tr");
+      celda(tr, "TOTAL");
+      celda(tr, CLP.format(totSaldo));
+      celda(tr, PCT.format(1));
+      celda(tr, CLP.format(totInv));
+      celda(tr, clp(totGan), clase(totGan));
+      celda(tr, pct(totInv ? totGan / totInv : 0), clase(totGan));
+      tf.appendChild(tr);
+    }
+  }
+
+  function graficar(serie) {
+    const cont = $("grafico-wrap"), svg = $("grafico");
+    svg.replaceChildren();
+    if (serie.length < 2) {
+      svg.setAttribute("height", 0);
+      $("nota-grafico").textContent = "Se necesitan al menos 2 registros para dibujar la curva.";
+      return;
+    }
+    $("nota-grafico").textContent = "Cada punto es un registro con su monto en pesos. El eje vertical no parte de cero: guíate por los montos, no por la altura de la línea.";
+    const NS = "http://www.w3.org/2000/svg", n = serie.length;
+    const paso = 92, m = { l: 46, r: 46, t: 40, b: 44 }, H = 260;
+    const W = Math.max(cont.clientWidth || 640, m.l + m.r + (n - 1) * paso);
+    svg.setAttribute("width", W); svg.setAttribute("height", H); svg.setAttribute("viewBox", "0 0 " + W + " " + H);
+
+    const vals = serie.map(s => s.total), min = Math.min(...vals), max = Math.max(...vals);
+    const holgura = (max - min) * 0.15 || max * 0.01 || 1, lo = min - holgura, hi = max + holgura;
+    const x = i => m.l + i * (W - m.l - m.r) / (n - 1);
+    const y = v => m.t + (1 - (v - lo) / (hi - lo)) * (H - m.t - m.b);
+    const el = (tag, attrs, texto) => {
+      const e = document.createElementNS(NS, tag);
+      Object.keys(attrs).forEach(k => e.setAttribute(k, attrs[k]));
+      if (texto !== undefined) e.textContent = texto;
+      return e;
+    };
+
+    svg.appendChild(el("line", { x1: m.l - 10, x2: W - m.r + 10, y1: H - m.b + 8, y2: H - m.b + 8, stroke: "var(--border)", "stroke-width": 1 }));
+    svg.appendChild(el("polyline", {
+      points: serie.map((s, i) => x(i) + "," + y(s.total)).join(" "),
+      fill: "none", stroke: "var(--blue)", "stroke-width": 2.5, "stroke-linejoin": "round"
+    }));
+    serie.forEach((s, i) => {
+      const ultimo = i === n - 1;
+      const c = el("circle", { cx: x(i), cy: y(s.total), r: ultimo ? 5 : 3.5, fill: "var(--blue)" });
+      c.appendChild(el("title", {}, fechaLarga(s.fecha) + " · " + CLP.format(s.total)));
+      svg.appendChild(c);
+      svg.appendChild(el("text", {
+        x: x(i), y: y(s.total) - 12, "text-anchor": "middle", "font-size": 12,
+        "font-weight": ultimo ? 700 : 500, fill: "var(--text)"
+      }, NUM.format(s.total)));
+      svg.appendChild(el("text", {
+        x: x(i), y: H - 16, "text-anchor": "middle", "font-size": 12, fill: "var(--muted)"
+      }, fechaCorta(s.fecha)));
+    });
+    cont.scrollLeft = cont.scrollWidth; // muestra lo más reciente
+  }
+
+  // ---------- formulario ----------
+  function campo(contenedor, prefijo, etiqueta, i, referencia) {
+    const d = document.createElement("div");
+    const l = document.createElement("label"); l.htmlFor = prefijo + i; l.textContent = etiqueta;
+    const inp = document.createElement("input");
+    inp.type = "text"; inp.inputMode = "numeric"; inp.id = prefijo + i; inp.autocomplete = "off";
+    inp.placeholder = referencia || "0";
+    inp.addEventListener("input", vistaPrevia);
+    d.append(l, inp); contenedor.appendChild(d);
+  }
+  function construirFormulario(r) {
+    $("campos-saldos").replaceChildren(); $("campos-aportes").replaceChildren();
+    r.plataformas.forEach((p, i) => {
+      const previo = r.ultima ? "Semana anterior: " + CLP.format(r.ultima.saldos[i]) : "0";
+      campo($("campos-saldos"), "saldo", p, i, previo);
+      campo($("campos-aportes"), "aporte", "Aporte a " + p, i, "0");
+    });
+    const hoy = hoyLocal();
+    const f = $("fecha");
+    if (r.ultima) {
+      const min = diaSiguiente(r.ultima.fecha);
+      f.min = min;
+      f.value = hoy >= min ? hoy : min;
+      $("nota-fecha").textContent = hoy >= min
+        ? "Debe ser posterior al último registro (" + fechaLarga(r.ultima.fecha) + ")."
+        : "Ya hay un registro de hoy. La próxima fecha disponible es " + fechaLarga(min) + " (la página no acepta fechas futuras hasta entonces).";
+    } else { f.removeAttribute("min"); f.value = hoy; $("nota-fecha").textContent = ""; }
+    vistaPrevia();
+  }
+  function leerForm() {
+    const n = datos.plataformas.length, saldos = [], aportes = [];
+    for (let i = 0; i < n; i++) { saldos.push(num($("saldo" + i).value)); aportes.push(num($("aporte" + i).value)); }
+    return { saldos, aportes, fecha: $("fecha").value };
+  }
+  function vistaPrevia() {
+    if (!datos) return;
+    const { saldos, aportes } = leerForm();
+    const total = suma(saldos), ap = suma(aportes), box = $("vista-previa");
+    if (!total) { box.textContent = "Completa los saldos para ver la variación real."; return; }
+    if (!datos.ultima) { box.textContent = "Total del registro: " + CLP.format(total) + " (primer registro)."; return; }
+    const bruta = total - datos.ultima.total, real = bruta - ap;
+    box.textContent = "Total: " + CLP.format(total) + " · Var. bruta: " + clp(bruta) + " · Aportes: " + CLP.format(ap) + " · Var. real estimada: " + clp(real);
+  }
+  async function guardar() {
+    const f = leerForm();
+    if (!f.fecha) { msg("msg-guardar", "Elige una fecha.", "error"); return; }
+    if (f.saldos.some(s => s === 0) && !confirm("Hay plataformas con saldo vacío o 0. ¿Guardar igual?")) return;
+    const total = suma(f.saldos), ap = suma(f.aportes);
+    if (!confirm("Guardar registro del " + fechaLarga(f.fecha) + "\nTotal: " + CLP.format(total) + "\nAportes: " + CLP.format(ap))) return;
+    $("btn-guardar").disabled = true; msg("msg-guardar", "Guardando…");
+    try {
+      const r = await llamar("registrar_semana", f);
+      pintar(r.resumen);
+      msg("msg-guardar", "Guardado en la fila " + r.fila + (r.aportesRegistrados ? " · aportes registrados: " + r.aportesRegistrados : "") + ". Los números de arriba ya están actualizados.", "ok");
+    } catch (e) { msg("msg-guardar", e.message, "error"); }
+    finally { $("btn-guardar").disabled = false; }
+  }
+
+  // ---------- eventos ----------
+  $("btn-conectar").addEventListener("click", () => conectar(false));
+  $("token").addEventListener("keydown", e => { if (e.key === "Enter") conectar(false); });
+  $("url").addEventListener("keydown", e => { if (e.key === "Enter") conectar(false); });
+  $("btn-guardar").addEventListener("click", guardar);
+  $("btn-salir").addEventListener("click", cerrarSesion);
+  $("btn-ocultar").addEventListener("click", () => {
+    const oculto = $("vista-app").classList.toggle("oculta");
+    $("btn-ocultar").textContent = oculto ? "Mostrar montos" : "Ocultar montos";
   });
+  // Recuerda si cerraste la guía
+  $("guia").addEventListener("toggle", () => { try { localStorage.setItem("inv_guia_abierta", $("guia").open ? "1" : "0"); } catch (e) {} });
+  try { if (localStorage.getItem("inv_guia_abierta") === "0") $("guia").open = false; } catch (e) {}
 
-  // ===== Datos del reporte (no son secretos: solo tu cuenta puede abrirlos) =====
-  const REPORT_ID = "34fe6088-0a7f-47c8-952b-ec2824a82967";
-  const PAGE_ID   = "SbSvF";
-  const SHEET_URL = "https://docs.google.com/spreadsheets/d/1n5rtiG8Kql53RffOTdYPExBC2My0ngweUREytp9S1uM/edit";
-  // ===============================================================================
-
-  const marco = document.getElementById("panel"), aviso = document.getElementById("aviso");
-  document.getElementById("btn-sheet").href  = SHEET_URL;
-  document.getElementById("btn-looker").href = "https://lookerstudio.google.com/reporting/" + REPORT_ID + "/page/" + PAGE_ID;
-  marco.addEventListener("load", function(){ aviso.classList.add("oculto"); });
-  marco.src = "https://lookerstudio.google.com/embed/reporting/" + REPORT_ID + "/page/" + PAGE_ID;
-
-  document.getElementById("btn-ocultar").addEventListener("click", function(){
-    var oculto = document.getElementById("marco").classList.toggle("oculto");
-    this.textContent = oculto ? "Mostrar montos" : "Ocultar montos";
-  });
+  // ---------- inicio: si hay conexión guardada, entra sola ----------
+  (function init() {
+    urlPuente = leer(K_URL) || URL_POR_DEFECTO; token = leer(K_TOKEN);
+    $("url").value = urlPuente;
+    if (urlPuente && token) { msg("msg-conexion", "Entrando…"); conectar(true); }
+  })();
+</script>
+<script>
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', function(){
+      navigator.serviceWorker.register('../sw.js').catch(function(){});
+    });
+  }
 </script>
 </body>
 </html>
