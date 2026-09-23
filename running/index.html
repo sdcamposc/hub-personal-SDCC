@@ -229,6 +229,35 @@ header{
     cursor:pointer;
   }
   .subtabs button.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+
+  /* ---- Rutina de piernas (temporizador guiado + editor) ---- */
+  .rutina-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:26px 18px;text-align:center;margin-bottom:16px;}
+  .rutina-fase{font-size:12px;font-weight:600;padding:4px 11px;border-radius:999px;background:var(--surface-2, var(--card));color:var(--text-secondary);}
+  .rutina-fase.main{background:rgba(108,142,239,0.14);color:var(--accent);}
+  .rutina-exname{font-size:20px;font-weight:700;margin:8px 0 2px;}
+  .rutina-exside{font-size:12.5px;font-weight:700;color:var(--accent);margin:0 0 6px;letter-spacing:.03em;min-height:16px;}
+  .rutina-exdetail{font-size:13.5px;color:var(--text-secondary);margin:0 0 18px;line-height:1.4;}
+  .rutina-timer{font-size:44px;font-weight:700;margin:0 0 18px;font-variant-numeric:tabular-nums;font-family:var(--fuente-numeros,'JetBrains Mono',monospace);}
+  .rutina-controls{display:flex;gap:10px;justify-content:center;}
+  .rutina-controls button{border:none;border-radius:12px;font-size:15px;font-weight:600;padding:12px 18px;cursor:pointer;font-family:inherit;}
+  .rutina-btn-primary{background:var(--accent);color:#fff;min-width:130px;}
+  .rutina-btn-ghost{background:var(--card);border:1px solid var(--border) !important;color:var(--text);width:48px;}
+  .rutina-list-title{font-size:12px;color:var(--text-secondary);margin:20px 0 8px;}
+  .rutina-item{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 10px;border-radius:10px;font-size:13px;color:var(--text-secondary);}
+  .rutina-item.current{background:rgba(108,142,239,0.14);color:var(--accent);font-weight:600;}
+  .rutina-item .status{font-size:11.5px;color:var(--text-secondary);font-variant-numeric:tabular-nums;}
+  .rutina-completa{background:rgba(74,222,148,0.14);border:1px solid var(--green);border-radius:14px;padding:20px;text-align:center;margin-bottom:16px;}
+  .rutina-secundario{background:none;border:1px solid var(--border);color:var(--text);border-radius:8px;padding:10px 12px;font-size:14px;font-weight:600;cursor:pointer;width:100%;margin-top:10px;}
+  .rutina-editor{margin-top:18px;}
+  .rutina-seccion-titulo{font-size:13px;font-weight:700;margin:16px 0 8px;}
+  .rutina-ex-editor{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:8px;}
+  .rutina-ex-editor .fila2{display:grid;grid-template-columns:1fr 90px;gap:8px;}
+  .rutina-ex-editor label{font-size:10.5px;margin:4px 0 2px;display:block;color:var(--text-secondary);}
+  .rutina-ex-editor input[type=text],.rutina-ex-editor input[type=number]{padding:7px 9px;font-size:13px;margin-top:0;}
+  .rutina-check{display:flex;align-items:center;gap:6px;font-size:12.5px;margin-top:6px;color:var(--text-secondary);}
+  .rutina-check input{width:auto;}
+  .rutina-quitar{background:none;border:none;color:var(--red);font-size:12px;cursor:pointer;margin-top:6px;padding:0;}
+  .rutina-agregar{width:100%;padding:8px;border:1px dashed var(--border);border-radius:10px;background:none;color:var(--text-secondary);font-size:13px;cursor:pointer;margin-top:4px;margin-bottom:8px;}
 </style>
 <link rel="manifest" href="../manifest.json">
 <meta name="theme-color" content="#0F1620">
@@ -249,6 +278,7 @@ header{
 <nav class="tabs">
   <button class="tab-btn active" data-tab="dashboard">Dashboard</button>
   <button class="tab-btn" data-tab="historial">Historial</button>
+  <button class="tab-btn" data-tab="rutina">🦵 Rutina piernas</button>
   <button class="tab-btn" data-tab="registrar">Registrar</button>
 </nav>
 
@@ -337,6 +367,62 @@ header{
         <thead><tr><th>Fecha</th><th>Tipo</th><th>Min</th><th>FC</th><th>RPE</th><th>Banda</th><th>Notas</th></tr></thead>
         <tbody></tbody>
       </table>
+    </div>
+  </section>
+
+  <!-- ==================== RUTINA DE PIERNAS ==================== -->
+  <section id="tab-rutina" class="tab-panel">
+    <div id="rutina-completa" class="rutina-completa" style="display:none;">
+      <strong>🎉 ¡Rutina terminada!</strong>
+      <p style="font-size:13px;color:var(--text-secondary);margin:6px 0 12px;">Ciérrala en tu reloj y regístrala aquí mismo, sin cambiar de app.</p>
+      <button class="primary" id="btn-ir-a-registrar" style="margin-top:0;">Registrar esta sesión</button>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <span class="rutina-fase" id="rutinaFaseBadge">Calentamiento</span>
+      <span style="font-size:12px;color:var(--text-secondary);" id="rutinaProgresoLabel">Paso 1</span>
+    </div>
+
+    <div class="rutina-card">
+      <p class="rutina-exname" id="rutinaExNombre">—</p>
+      <p class="rutina-exside" id="rutinaExLado"></p>
+      <p class="rutina-exdetail" id="rutinaExDetalle"></p>
+      <p class="rutina-timer" id="rutinaTimer">0:00</p>
+      <div class="rutina-controls">
+        <button class="rutina-btn-ghost" id="rutinaBack" aria-label="Paso anterior">◀</button>
+        <button class="rutina-btn-primary" id="rutinaPlay">▶ Iniciar</button>
+        <button class="rutina-btn-ghost" id="rutinaNext" aria-label="Siguiente paso">▶</button>
+      </div>
+    </div>
+
+    <p class="rutina-list-title">Check de la sesión</p>
+    <div id="rutinaOverview"></div>
+
+    <button class="primary" id="btnAbrirEditorRutina" style="margin-top:24px;">✏️ Editar rutina</button>
+
+    <div class="rutina-editor" id="rutinaEditor" style="display:none;">
+      <div class="card">
+        <label>Rondas del circuito principal</label>
+        <input type="number" id="rutinaRondas" min="1" max="6" style="max-width:100px;">
+        <label>Descanso entre ejercicios del circuito (seg)</label>
+        <input type="number" id="rutinaDescanso" min="0" max="120" style="max-width:100px;">
+
+        <div class="rutina-seccion-titulo">🔥 Calentamiento</div>
+        <div id="rutinaEditorWarmup"></div>
+        <button type="button" class="rutina-agregar" data-agregar="warmup">+ Agregar ejercicio</button>
+
+        <div class="rutina-seccion-titulo">🔁 Circuito principal <span style="font-weight:400;color:var(--text-secondary);">(se repite las rondas de arriba)</span></div>
+        <div id="rutinaEditorMain"></div>
+        <button type="button" class="rutina-agregar" data-agregar="main">+ Agregar ejercicio</button>
+
+        <div class="rutina-seccion-titulo">🧘 Enfriamiento</div>
+        <div id="rutinaEditorCooldown"></div>
+        <button type="button" class="rutina-agregar" data-agregar="cooldown">+ Agregar ejercicio</button>
+
+        <button class="primary" id="btnGuardarRutina">Guardar rutina</button>
+        <button class="rutina-secundario" id="btnRestaurarRutina">Restaurar rutina predeterminada</button>
+        <p id="rutinaEditorMsg" style="font-size:12.5px;margin-top:10px;"></p>
+      </div>
     </div>
   </section>
 
@@ -463,6 +549,16 @@ async function cargarDatos(){
     DATA.historial = json.historial || [];
     DATA.piernas = json.piernas || [];
     DATA.notaProximaSesion = json.notaProximaSesion || '';
+    // La rutina que vive en el Sheet manda sobre la copia local (si existe) —
+    // así queda igual en todos tus dispositivos, no solo en el que la editaste.
+    if(json.rutina){
+      RUTINA = json.rutina;
+      localStorage.setItem(RUTINA_KEY, JSON.stringify(RUTINA));
+      rutinaReiniciar();
+      if(document.getElementById('rutinaEditor').style.display !== 'none'){
+        rutinaRenderEditor();
+      }
+    }
     loadingEl.style.display = 'none';
     renderDashboard();
     renderHistorial();
@@ -787,6 +883,335 @@ themeBtn.addEventListener('click', function(){
 // Muestra el dashboard de entrada (antes se activaba solo al cargar datos con éxito)
 document.querySelectorAll('.tab-panel')[0].classList.add('active');
 cargarDatos();
+
+// ═══════════════════════════════════════════════════════════════
+// RUTINA DE PIERNAS — temporizador guiado + editor
+// Todo vive en este navegador (localStorage) — no depende de Apps Script.
+// Integrada desde el artefacto que ya tenías, ahora editable desde acá:
+// si cambias los ejercicios en una sesión, editas la rutina aquí mismo
+// y queda guardada para la próxima vez.
+// ═══════════════════════════════════════════════════════════════
+const RUTINA_KEY = 'piernas_rutina_v1';
+
+const RUTINA_DEFAULT = {
+  rounds: 3,
+  restSec: 15,
+  warmup: [
+    {name:'Marcha en el lugar', detail:'Activa piernas, sin banda', sec:40, split:false},
+    {name:'Círculos de cadera', detail:'Movilidad de cadera, sin banda', sec:30, split:false},
+    {name:'Sentadilla parcial suave', detail:'Sin banda, rango corto', sec:30, split:false},
+    {name:'Elevación pierna lateral (acostado)', detail:'Banda suave sobre rodillas, pierna de arriba estirada', sec:20, split:true},
+  ],
+  main: [
+    {name:'Sentadilla con banda', detail:'Banda sobre rodillas, rodillas hacia afuera, rango parcial', sec:40, split:false},
+    {name:'Puente de glúteo', detail:'Banda sobre rodillas, aprieta el glúteo arriba', sec:40, split:false},
+    {name:'Almeja (clamshell)', detail:'Banda sobre rodillas, tumbado de lado', sec:20, split:true},
+    {name:'Caminata lateral', detail:'Banda sobre rodillas, semi-sentadilla, pasos cortos', sec:20, split:true},
+    {name:'Patada de fuego en cuadrupedia', detail:'Manos bajo hombros, rodillas bajo cadera, rodilla a 90 grados', sec:20, split:true},
+    {name:'Marcha de cadera', detail:'Banda sobre tobillos, de pie, alternando sin parar', sec:40, split:false},
+  ],
+  cooldown: [
+    {name:'Estiramiento cuádriceps', detail:'De pie, talón hacia el glúteo', sec:35, split:true},
+    {name:'Estiramiento isquiotibiales', detail:'Talón adelantado, tronco al frente', sec:35, split:true},
+    {name:'Estiramiento glúteo (figura 4)', detail:'Sentado en el mat', sec:35, split:true},
+    {name:'Estiramiento pantorrilla', detail:'De pie contra la pared', sec:35, split:true},
+  ]
+};
+
+function copiaProfunda(obj){ return JSON.parse(JSON.stringify(obj)); }
+
+function cargarRutina(){
+  try{
+    const guardada = localStorage.getItem(RUTINA_KEY);
+    if(guardada) return JSON.parse(guardada);
+  }catch(e){}
+  return copiaProfunda(RUTINA_DEFAULT);
+}
+
+let RUTINA = cargarRutina();
+let rutinaSteps = [];
+let rutinaOverviewDef = [];
+let rutinaRanges = {};
+let rIdx = 0, rRemaining = 0, rTimerId = null, rRunning = false;
+const rutinaFaseLabel = {warmup:'Calentamiento', main:'Circuito', cooldown:'Enfriamiento'};
+
+function rutinaPushItem(item, fase, ronda, destino){
+  if (item.split){
+    ['Derecha','Izquierda'].forEach(lado => destino.push({fase, ronda, name:item.name, side:lado, detail:item.detail, sec:item.sec}));
+  } else {
+    destino.push({fase, ronda, name:item.name, side:null, detail:item.detail, sec:item.sec});
+  }
+}
+
+function construirPasosRutina(){
+  const pasos = [];
+  RUTINA.warmup.forEach(w => rutinaPushItem(w, 'warmup', null, pasos));
+  const rondas = Math.max(1, Number(RUTINA.rounds) || 1);
+  const descanso = Math.max(0, Number(RUTINA.restSec) || 0);
+  for(let r = 1; r <= rondas; r++){
+    RUTINA.main.forEach((ex, i) => {
+      rutinaPushItem(ex, 'main', r, pasos);
+      const esUltimo = (r === rondas && i === RUTINA.main.length - 1);
+      if(!esUltimo && descanso > 0){
+        pasos.push({fase:'main', ronda:r, name:'Descanso', side:null, detail:'Recupera antes del siguiente ejercicio', sec:descanso});
+      }
+    });
+  }
+  RUTINA.cooldown.forEach(c => rutinaPushItem(c, 'cooldown', null, pasos));
+
+  const rangos = {};
+  pasos.forEach((s, i) => {
+    const key = s.fase + '|' + s.name + '|' + (s.ronda || '');
+    if(!rangos[key]) rangos[key] = {first:i, last:i};
+    rangos[key].last = i;
+  });
+
+  const overview = RUTINA.warmup.map(w => ({name:w.name, fase:'warmup'}))
+    .concat(RUTINA.main.map(m => ({name:m.name, fase:'main'})))
+    .concat(RUTINA.cooldown.map(c => ({name:c.name, fase:'cooldown'})));
+
+  rutinaSteps = pasos;
+  rutinaRanges = rangos;
+  rutinaOverviewDef = overview;
+}
+
+function rutinaFmt(s){ const m=Math.floor(s/60); const r=s%60; return m+':'+String(r).padStart(2,'0'); }
+
+function rutinaRenderOverview(){
+  const cont = document.getElementById('rutinaOverview');
+  cont.innerHTML = '';
+  if(!rutinaSteps.length) return;
+  const step = rutinaSteps[rIdx];
+  const rondas = Math.max(1, Number(RUTINA.rounds) || 1);
+  rutinaOverviewDef.forEach(o => {
+    const row = document.createElement('div');
+    let statusHtml = '', esActual = false;
+    if(o.fase === 'main'){
+      let hechos = 0;
+      for(let r = 1; r <= rondas; r++){
+        const key = 'main|' + o.name + '|' + r;
+        const rg = rutinaRanges[key];
+        if(rg && rIdx > rg.last) hechos++;
+        if(rg && rIdx >= rg.first && rIdx <= rg.last && step.fase === 'main' && step.name === o.name) esActual = true;
+      }
+      statusHtml = '<span class="status">' + hechos + '/' + rondas + '</span>';
+    } else {
+      const key = o.fase + '|' + o.name + '|';
+      const rg = rutinaRanges[key];
+      const hecho = rg && rIdx > rg.last;
+      esActual = !!(rg && rIdx >= rg.first && rIdx <= rg.last);
+      statusHtml = '<span class="status">' + (hecho ? '✓' : '') + '</span>';
+    }
+    row.className = 'rutina-item' + (esActual ? ' current' : '');
+    row.innerHTML = '<span>' + esc(o.name) + '</span>' + statusHtml;
+    cont.appendChild(row);
+  });
+}
+
+function rutinaRender(){
+  if(!rutinaSteps.length) return;
+  const step = rutinaSteps[rIdx];
+  document.getElementById('rutinaExNombre').textContent = step.name;
+  document.getElementById('rutinaExLado').textContent = step.side ? step.side.toUpperCase() : '';
+  document.getElementById('rutinaExDetalle').textContent = step.detail;
+  document.getElementById('rutinaTimer').textContent = rutinaFmt(rRemaining);
+  const badge = document.getElementById('rutinaFaseBadge');
+  badge.textContent = rutinaFaseLabel[step.fase] + (step.fase === 'main' ? ' — Ronda ' + step.ronda + '/' + (RUTINA.rounds||3) : '');
+  badge.className = 'rutina-fase' + (step.fase === 'main' ? ' main' : '');
+  document.getElementById('rutinaProgresoLabel').textContent = 'Paso ' + (rIdx+1) + ' de ' + rutinaSteps.length;
+  rutinaRenderOverview();
+}
+
+function rutinaGoTo(nuevoIdx){
+  rIdx = Math.max(0, Math.min(rutinaSteps.length - 1, nuevoIdx));
+  rRemaining = rutinaSteps[rIdx].sec;
+  rutinaRender();
+}
+
+function rutinaTick(){
+  rRemaining--;
+  if(rRemaining <= 0){
+    if(rIdx < rutinaSteps.length - 1){ rutinaGoTo(rIdx + 1); }
+    else { rutinaPause(); rutinaMostrarCompleta(); }
+    return;
+  }
+  document.getElementById('rutinaTimer').textContent = rutinaFmt(rRemaining);
+}
+
+function rutinaPlay(){
+  rRunning = true;
+  document.getElementById('rutinaPlay').textContent = '❚❚ Pausar';
+  document.getElementById('rutina-completa').style.display = 'none';
+  rTimerId = setInterval(rutinaTick, 1000);
+}
+function rutinaPause(){
+  rRunning = false;
+  document.getElementById('rutinaPlay').textContent = '▶ Iniciar';
+  clearInterval(rTimerId);
+}
+function rutinaMostrarCompleta(){
+  document.getElementById('rutina-completa').style.display = 'block';
+}
+
+function rutinaReiniciar(){
+  rutinaPause();
+  construirPasosRutina();
+  document.getElementById('rutina-completa').style.display = 'none';
+  rutinaGoTo(0);
+}
+
+document.getElementById('rutinaPlay').addEventListener('click', () => rRunning ? rutinaPause() : rutinaPlay());
+document.getElementById('rutinaNext').addEventListener('click', () => { rutinaPause(); rutinaGoTo(rIdx + 1); });
+document.getElementById('rutinaBack').addEventListener('click', () => { rutinaPause(); rutinaGoTo(rIdx - 1); });
+
+// ---------- Registrar esta sesión (enlace Rutina → Registrar) ----------
+document.getElementById('btn-ir-a-registrar').addEventListener('click', () => {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelector('.tab-btn[data-tab="registrar"]').classList.add('active');
+  document.getElementById('tab-registrar').classList.add('active');
+  document.querySelectorAll('.sub-btn[data-regsub]').forEach(b => b.classList.remove('active'));
+  document.querySelector('.sub-btn[data-regsub="fuerza"]').classList.add('active');
+  document.getElementById('form-running').style.display = 'none';
+  document.getElementById('form-fuerza').style.display = 'block';
+
+  const hoy = new Date();
+  const hoyISO = hoy.getFullYear() + '-' + String(hoy.getMonth()+1).padStart(2,'0') + '-' + String(hoy.getDate()).padStart(2,'0');
+  document.getElementById('f-fecha').value = hoyISO;
+  document.getElementById('f-rondas').value = RUTINA.rounds || 3;
+  const totalSeg = rutinaSteps.reduce((s, p) => s + p.sec, 0);
+  document.getElementById('f-duracion').value = Math.round(totalSeg / 60);
+
+  document.getElementById('rutina-completa').style.display = 'none';
+});
+
+// ---------- Editor de la rutina ----------
+const SECCIONES_RUTINA = ['warmup', 'main', 'cooldown'];
+
+function rutinaRenderEditor(){
+  document.getElementById('rutinaRondas').value = RUTINA.rounds || 3;
+  document.getElementById('rutinaDescanso').value = RUTINA.restSec != null ? RUTINA.restSec : 15;
+
+  SECCIONES_RUTINA.forEach(seccion => {
+    const contId = seccion === 'warmup' ? 'rutinaEditorWarmup' : (seccion === 'main' ? 'rutinaEditorMain' : 'rutinaEditorCooldown');
+    const cont = document.getElementById(contId);
+    cont.innerHTML = '';
+    RUTINA[seccion].forEach((ex, i) => {
+      const div = document.createElement('div');
+      div.className = 'rutina-ex-editor';
+      div.innerHTML = `
+        <label>Nombre</label>
+        <input type="text" data-seccion="${seccion}" data-i="${i}" data-campo="name" value="${esc(ex.name)}">
+        <div class="fila2">
+          <div>
+            <label>Detalle</label>
+            <input type="text" data-seccion="${seccion}" data-i="${i}" data-campo="detail" value="${esc(ex.detail)}">
+          </div>
+          <div>
+            <label>Segundos</label>
+            <input type="number" min="5" max="180" data-seccion="${seccion}" data-i="${i}" data-campo="sec" value="${Number(ex.sec)||30}">
+          </div>
+        </div>
+        <label class="rutina-check">
+          <input type="checkbox" data-seccion="${seccion}" data-i="${i}" data-campo="split" ${ex.split ? 'checked' : ''}>
+          Se hace por lado (derecha/izquierda)
+        </label>
+        <button type="button" class="rutina-quitar" data-quitar-seccion="${seccion}" data-quitar-i="${i}">✕ Quitar ejercicio</button>
+      `;
+      cont.appendChild(div);
+    });
+  });
+
+  document.querySelectorAll('[data-quitar-seccion]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const seccion = btn.dataset.quitarSeccion, i = Number(btn.dataset.quitarI);
+      RUTINA[seccion].splice(i, 1);
+      rutinaRenderEditor();
+    });
+  });
+}
+
+document.querySelectorAll('.rutina-agregar').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const seccion = btn.dataset.agregar;
+    RUTINA[seccion].push({name:'Nuevo ejercicio', detail:'', sec:30, split:false});
+    rutinaRenderEditor();
+  });
+});
+
+document.getElementById('btnAbrirEditorRutina').addEventListener('click', () => {
+  const ed = document.getElementById('rutinaEditor');
+  const abrir = ed.style.display === 'none';
+  ed.style.display = abrir ? 'block' : 'none';
+  if(abrir) rutinaRenderEditor();
+});
+
+document.getElementById('btnGuardarRutina').addEventListener('click', async () => {
+  // Lee todos los inputs del editor de vuelta al objeto RUTINA
+  document.querySelectorAll('#rutinaEditor [data-seccion]').forEach(input => {
+    const seccion = input.dataset.seccion, i = Number(input.dataset.i), campo = input.dataset.campo;
+    if(!RUTINA[seccion] || !RUTINA[seccion][i]) return;
+    if(campo === 'split'){
+      RUTINA[seccion][i].split = input.checked;
+    } else if(campo === 'sec'){
+      RUTINA[seccion][i].sec = Math.max(5, Number(input.value) || 30);
+    } else {
+      RUTINA[seccion][i][campo] = input.value;
+    }
+  });
+  RUTINA.rounds = Math.max(1, Number(document.getElementById('rutinaRondas').value) || 3);
+  RUTINA.restSec = Math.max(0, Number(document.getElementById('rutinaDescanso').value) || 0);
+
+  localStorage.setItem(RUTINA_KEY, JSON.stringify(RUTINA));
+  rutinaReiniciar();
+
+  const msg = document.getElementById('rutinaEditorMsg');
+  const btn = document.getElementById('btnGuardarRutina');
+  const token = getToken();
+  if(!token){
+    msg.textContent = '✓ Guardada en este navegador. Pega tu token en "Registrar" para que también quede en el Sheet y se sincronice entre tus dispositivos.';
+    msg.style.color = 'var(--amber)';
+    return;
+  }
+
+  btn.disabled = true;
+  msg.textContent = 'Guardando en el Sheet…';
+  msg.style.color = 'var(--text-secondary)';
+  try{
+    const res = await fetch(WEBHOOK_URL, {
+      method: 'POST',
+      body: JSON.stringify({ token, accion: 'guardarRutina', rutina: RUTINA })
+    });
+    const json = await res.json();
+    btn.disabled = false;
+    if(json.ok){
+      msg.textContent = '✓ Rutina guardada en el Sheet — queda igual en todos tus dispositivos.';
+      msg.style.color = 'var(--green)';
+    } else {
+      msg.textContent = '✓ Guardada en este navegador, pero no en el Sheet: ' + (json.error || 'error desconocido');
+      msg.style.color = 'var(--red)';
+    }
+  }catch(err){
+    btn.disabled = false;
+    msg.textContent = '✓ Guardada en este navegador, pero no se pudo conectar para guardarla en el Sheet.';
+    msg.style.color = 'var(--red)';
+  }
+});
+
+document.getElementById('btnRestaurarRutina').addEventListener('click', () => {
+  if(!confirm('¿Restaurar la rutina predeterminada? Se pierden los cambios que hayas hecho.')) return;
+  localStorage.removeItem(RUTINA_KEY);
+  RUTINA = copiaProfunda(RUTINA_DEFAULT);
+  rutinaRenderEditor();
+  rutinaReiniciar();
+  const msg = document.getElementById('rutinaEditorMsg');
+  msg.textContent = '✓ Restaurada a la rutina predeterminada.';
+  msg.style.color = 'var(--green)';
+});
+
+// Arranque inicial de la rutina
+construirPasosRutina();
+rutinaGoTo(0);
 </script>
 <script>
   if('serviceWorker' in navigator){
