@@ -257,6 +257,8 @@
 
   footer{margin-top:48px; text-align:center; color:var(--muted); font-size:11px;}
 </style>
+<link rel="manifest" href="../manifest.json">
+<meta name="theme-color" content="#0F1620">
 </head>
 <body>
 <div class="wrap">
@@ -1406,6 +1408,13 @@ function renderCuotas(datos){
     cont.appendChild(div);
   });
 }
+</script>
+<script>
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', function(){
+      navigator.serviceWorker.register('../sw.js').catch(function(){});
+    });
+  }
 </script>
 </body>
 </html>
