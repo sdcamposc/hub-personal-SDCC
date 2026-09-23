@@ -230,6 +230,8 @@ header{
   }
   .subtabs button.active{background:var(--accent);color:#fff;border-color:var(--accent);}
 </style>
+<link rel="manifest" href="../manifest.json">
+<meta name="theme-color" content="#0F1620">
 </head>
 <body>
 
@@ -785,6 +787,13 @@ themeBtn.addEventListener('click', function(){
 // Muestra el dashboard de entrada (antes se activaba solo al cargar datos con éxito)
 document.querySelectorAll('.tab-panel')[0].classList.add('active');
 cargarDatos();
+</script>
+<script>
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', function(){
+      navigator.serviceWorker.register('../sw.js').catch(function(){});
+    });
+  }
 </script>
 </body>
 </html>
