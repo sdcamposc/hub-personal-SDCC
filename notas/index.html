@@ -8,7 +8,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>Notas — Hub personal</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../hub.css">
 <script>
   (function(){
     var guardado = localStorage.getItem('tema-dashboard') || 'dark';
@@ -49,13 +50,14 @@
   }
   *{box-sizing:border-box;margin:0;padding:0;}
   body{
-    font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-family:var(--fuente-cuerpo),-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
     background:var(--bg);
     color:var(--text);
     padding-bottom:60px;
     transition:background .2s ease, color .2s ease;
   }
-  .mono{font-family:'JetBrains Mono',monospace;}
+  h1,h2,h3{font-family:var(--fuente-titulo);}
+  .mono{font-family:var(--fuente-numeros),monospace;}
   .theme-toggle{
     width:38px; height:38px; border-radius:20px; border:1px solid var(--border);
     background:var(--surface-2); display:flex; align-items:center; justify-content:center;
@@ -78,7 +80,7 @@
   .franja-item{padding:16px 18px; border-left:1px solid var(--border);}
   .franja-item:first-child{border-left:none;}
   .franja-label{font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin-bottom:6px;}
-  .franja-value{font-family:'JetBrains Mono',monospace; font-size:22px; font-weight:700;}
+  .franja-value{font-family:var(--fuente-numeros),monospace; font-size:22px; font-weight:700;}
 
   .filtros{display:flex; gap:6px; margin-bottom:14px; flex-wrap:wrap;}
   .filtro-pill{
@@ -145,6 +147,8 @@
   .msg.err{color:var(--red);}
   .msg.ok{color:var(--green);}
 </style>
+<link rel="manifest" href="../manifest.json">
+<meta name="theme-color" content="#0F1620">
 </head>
 <body>
   <header>
@@ -480,6 +484,13 @@ btnGuardarAgregar.addEventListener('click', async () => {
 });
 
 cargarDatos();
+</script>
+<script>
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', function(){
+      navigator.serviceWorker.register('../sw.js').catch(function(){});
+    });
+  }
 </script>
 </body>
 </html>
