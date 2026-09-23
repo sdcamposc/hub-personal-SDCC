@@ -164,6 +164,19 @@
         </div>
       </div>
 
+      <!-- NOTAS SIN CLASIFICAR (enlace entre módulos: Notas → Tareas) -->
+      <div class="tarjeta bento-tarjeta">
+        <a class="bento-link" href="notas/">
+          <div class="bento-titulo">🧠 Notas por revisar</div>
+          <div class="bento-cifra" id="notasCifra">—</div>
+          <div class="bento-sub" id="notasSub">Cargando…</div>
+        </a>
+        <div class="conectar" id="notasConectar" style="display:none;">
+          <input type="text" id="notasTokenInput" placeholder="Pega tu token">
+          <button class="btn" id="notasTokenBtn">Conectar</button>
+        </div>
+      </div>
+
       <!-- INVERSIONES (queda bloqueada a propósito) -->
       <div class="tarjeta bento-tarjeta bloqueada">
         <a class="bento-link" href="inversiones/">
@@ -263,6 +276,7 @@
     if(!token){
       habilitarConectar('habitos', cargarSistemaPersonal);
       habilitarConectar('tareas', cargarSistemaPersonal);
+      habilitarConectar('notas', cargarSistemaPersonal);
       return;
     }
     fetch(SP_URL + '?action=data&token=' + encodeURIComponent(token))
@@ -271,10 +285,12 @@
         if(!json.ok) throw new Error(json.error || 'Token inválido');
         pintarHabitos(json.config || [], json.registros || []);
         pintarTareas(json.tareas || []);
+        pintarNotas(json.notas || []);
       })
       .catch(err => {
         document.getElementById('habitosSub').textContent = 'No se pudo cargar';
         document.getElementById('tareasSub').textContent = 'No se pudo cargar';
+        document.getElementById('notasSub').textContent = 'No se pudo cargar';
       });
   }
 
@@ -299,6 +315,22 @@
     document.getElementById('tareasSub').textContent = vencidas > 0
       ? (vencidas + ' vencida' + (vencidas === 1 ? '' : 's'))
       : (pendientes.length ? 'Pendientes al día' : 'Sin pendientes 🎉');
+  }
+
+  // "Sin clasificar" = quedaron en el cajón genérico "Nota" (no matchearon
+  // ninguna palabra clave de Idea/Recordatorio/Referencia) — son las que más
+  // vale la pena revisar, porque el clasificador no supo qué hacer con ellas.
+  function pintarNotas(notas){
+    function archivada(n){ return n.Archivada === true || n.Archivada === 'TRUE'; }
+    var sinClasificar = notas.filter(n => !archivada(n) && (!n.Tipo || n.Tipo === 'Nota'));
+    document.getElementById('notasCifra').textContent = sinClasificar.length;
+    if(sinClasificar.length === 0){
+      document.getElementById('notasSub').textContent = 'Todo clasificado 🎉';
+      return;
+    }
+    var ultima = sinClasificar[sinClasificar.length - 1];
+    var texto = (ultima.Texto || '').slice(0, 44);
+    document.getElementById('notasSub').textContent = 'Última: "' + texto + (ultima.Texto && ultima.Texto.length > 44 ? '…' : '') + '"';
   }
 
   cargarSistemaPersonal();
