@@ -340,6 +340,7 @@ function render(){
         </div>
       </div>
       <div class="nota-acciones">
+        <button class="archivar-btn" data-convertir="${esc(n.Id)}" title="Convertir en tarea">➡️✅</button>
         <button class="archivar-btn" data-archivar="${esc(n.Id)}" data-archivada="${esArchivada(n) ? 'false' : 'true'}" title="${esArchivada(n) ? 'Desarchivar' : 'Archivar'}">${esArchivada(n) ? '📤' : '📦'}</button>
         <button class="eliminar-btn" data-eliminar="${esc(n.Id)}" title="Eliminar nota (permanente)">✕</button>
       </div>
@@ -356,6 +357,35 @@ function render(){
   document.querySelectorAll('[data-reclasificar]').forEach(el => {
     el.addEventListener('change', () => reclasificarNotaUI(el.dataset.reclasificar, el.value));
   });
+  document.querySelectorAll('[data-convertir]').forEach(el => {
+    el.addEventListener('click', () => convertirATareaUI(el.dataset.convertir));
+  });
+}
+
+async function convertirATareaUI(id){
+  const token = getToken();
+  const msg = document.getElementById('mensajeGlobal');
+  if(!token){ msg.textContent = 'Pega tu token arriba antes de convertir.'; msg.className = 'msg err'; return; }
+  if(!confirm('¿Convertir esta nota en tarea? La nota se archiva (no se borra).')) return;
+
+  try{
+    const params = new URLSearchParams({ token, hoja:'nota', accion:'convertirATarea', id });
+    const res = await fetch(WEBHOOK_URL + '?' + params.toString());
+    const json = await res.json();
+    if(json.ok){
+      const nota = NOTAS.find(n => String(n.Id) === String(id));
+      if(nota) nota.Archivada = true;
+      msg.textContent = '✓ Convertida en tarea — revísala en Tareas';
+      msg.className = 'msg ok';
+      render();
+    } else {
+      msg.textContent = '⚠️ ' + (json.error || 'No se pudo convertir');
+      msg.className = 'msg err';
+    }
+  }catch(err){
+    msg.textContent = '⚠️ No se pudo conectar.';
+    msg.className = 'msg err';
+  }
 }
 
 async function archivarNotaUI(id, archivada){
